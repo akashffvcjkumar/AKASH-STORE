@@ -1,0 +1,803 @@
+{
+  "users": [
+    {
+      "id": "usr_owner_001",
+      "name": "Akash Chondror Roy",
+      "email": "akashchondroroy@protonmail.com",
+      "role": "SUPER_ADMIN",
+      "status": "ACTIVE",
+      "passwordHash": "4ee4214111966f3d172590c7803f9cc80f65dc55f3363c10251565c2793fea4b45099b61480dc946f7f821be356ce9922b335aed6f3d98a5eca647f4ee3467a7",
+      "salt": "2688bc691a527e14184080df2ad7dcdf",
+      "mustChangePassword": false,
+      "lastLoginAt": "2026-09-02T18:00:20.840Z",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "usr_emp_002",
+      "name": "Rahim Ahmed",
+      "email": "rahim@akashstore.com",
+      "role": "ORDER_MANAGER",
+      "status": "ACTIVE",
+      "passwordHash": "040b8917112fd9aef4e5de431001e60129488f1bafd7829a6c198edca436e50afb5dc9ee6f1487dd4f5bcc03364c8a847a2ee7acb24f4f8a2346d6a0b06feea4",
+      "salt": "b87eb84f6ab3f977e8f1cf1ef9f623ae",
+      "mustChangePassword": false,
+      "lastLoginAt": "2026-09-01T14:20:00.000Z",
+      "createdAt": "2026-02-15T09:30:00.000Z",
+      "updatedAt": "2026-02-15T09:30:00.000Z"
+    },
+    {
+      "id": "usr_emp_003",
+      "name": "Tanvir Hossain",
+      "email": "tanvir@akashstore.com",
+      "role": "INVENTORY_MANAGER",
+      "status": "ACTIVE",
+      "passwordHash": "6651e9fe43957131fa5dfb5de373096172032072be247efa93c4c3290f513a5fc05101922b707e383d5ee6482af470cc68a81fd5c1191d0e19a96fef9c244e5c",
+      "salt": "dc2e036aa77ccbe5a7477684f2851adc",
+      "mustChangePassword": false,
+      "lastLoginAt": "2026-09-02T08:15:00.000Z",
+      "createdAt": "2026-03-10T11:00:00.000Z",
+      "updatedAt": "2026-03-10T11:00:00.000Z"
+    },
+    {
+      "id": "usr_emp_004",
+      "name": "Nusrat Jahan",
+      "email": "nusrat@akashstore.com",
+      "role": "SUPPORT_AGENT",
+      "status": "ACTIVE",
+      "passwordHash": "ff622cff0687021ba66821d73606526d32eddea44c79bd6f261b8d0a4d890ad025fe68cb665a4289312638d50da5b2a3eeb83805e28e2e8a1d8098130af7a2c1",
+      "salt": "b995c174ad92587eed60778798b2992b",
+      "mustChangePassword": false,
+      "lastLoginAt": "2026-09-02T09:45:00.000Z",
+      "createdAt": "2026-04-01T10:00:00.000Z",
+      "updatedAt": "2026-04-01T10:00:00.000Z"
+    },
+    {
+      "id": "usr_emp_005",
+      "name": "Faruk Hasan",
+      "email": "faruk@akashstore.com",
+      "role": "ADMIN",
+      "status": "ACTIVE",
+      "passwordHash": "f669e86dd72bda42b4f0a3d771221951d2a8c8acb1044dc784cfcec7a606f5e1614b60e017cd205ed8f6e88eef0f559b2ea86eeaea7737e2ad9e0db0edf8ed56",
+      "salt": "213e5a08af10f5dca2ba99b08a1503c2",
+      "mustChangePassword": false,
+      "lastLoginAt": "2026-09-01T17:10:00.000Z",
+      "createdAt": "2026-01-20T12:00:00.000Z",
+      "updatedAt": "2026-01-20T12:00:00.000Z"
+    },
+    {
+      "id": "usr_emp_mtkfmhx9",
+      "name": "shuvo",
+      "email": "hanterpro899@gmail.com",
+      "role": "ADMIN",
+      "status": "ACTIVE",
+      "passwordHash": "e145a5afc263376fbb48cdc92bc8e3801c18961b625869c7fb8aa24de32f76ec6a2d8702dd7c941eac30b622b232f751e641903679418f49f43f5465e4ef7797",
+      "salt": "cadd4be87e7771f99f86f19ba3119db6",
+      "mustChangePassword": true,
+      "temporaryPassword": "A8$6KghLXLHM",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-02T18:31:05.277Z",
+      "updatedAt": "2026-09-02T18:31:05.277Z"
+    },
+    {
+      "id": "usr_cust_1788374058038_z83i",
+      "name": "Test Customer",
+      "email": "customer.test@gmail.com",
+      "role": "CUSTOMER",
+      "status": "ACTIVE",
+      "authProvider": "GOOGLE",
+      "googleId": "google_1788374058038",
+      "avatar": "https://api.dicebear.com/7.x/initials/svg?seed=Test%20Customer",
+      "lastLoginAt": "2026-09-02T18:34:18.038Z",
+      "createdAt": "2026-09-02T18:34:18.038Z",
+      "updatedAt": "2026-09-02T18:34:18.038Z"
+    }
+  ],
+  "sessions": [
+    {
+      "token": "7c277533553e7d8955ca972ae4ca02f5af893e691b76902d6c8bd8c5717aebaa",
+      "userId": "usr_owner_001",
+      "role": "SUPER_ADMIN",
+      "createdAt": "2026-09-02T18:06:23.619Z",
+      "expiresAt": "2026-09-03T18:06:23.619Z",
+      "userAgent": "Demo Quick Switcher",
+      "ip": "103.244.49.72"
+    },
+    {
+      "token": "270c680c812f808f678fb0516e5a1139d478311a8acf7b9f3b161243d2096161",
+      "userId": "usr_owner_001",
+      "role": "SUPER_ADMIN",
+      "createdAt": "2026-09-02T18:06:23.621Z",
+      "expiresAt": "2026-09-03T18:06:23.621Z",
+      "userAgent": "Demo Quick Switcher",
+      "ip": "103.244.49.72"
+    },
+    {
+      "token": "f6b0cf8925eb10b4653d02abbc300a83db5c309eaa8893234fa9d849a6e6c454",
+      "userId": "usr_cust_1788374058038_z83i",
+      "role": "CUSTOMER",
+      "createdAt": "2026-09-02T18:34:18.039Z",
+      "expiresAt": "2026-10-02T18:34:18.038Z",
+      "userAgent": "curl/7.88.1",
+      "ip": "127.0.0.1"
+    }
+  ],
+  "auditLogs": [
+    {
+      "employeeId": "usr_cust_1788374058038_z83i",
+      "employeeName": "Test Customer",
+      "employeeEmail": "customer.test@gmail.com",
+      "role": "CUSTOMER",
+      "action": "BLOCKED_CUSTOMER_ADMIN_ACCESS",
+      "resource": "AdminAPI",
+      "details": "Customer account (customer.test@gmail.com) attempted unauthorized access to admin endpoint GET /api/admin/staff. Blocked with 403 Forbidden.",
+      "ip": "127.0.0.1",
+      "status": "REJECTED",
+      "id": "aud_1788374064008_13eiq",
+      "timestamp": "2026-09-02T18:34:24.008Z"
+    },
+    {
+      "employeeId": "usr_cust_1788374058038_z83i",
+      "employeeName": "Test Customer",
+      "employeeEmail": "customer.test@gmail.com",
+      "role": "CUSTOMER",
+      "action": "CUSTOMER_GOOGLE_LOGIN",
+      "resource": "CustomerAuth",
+      "details": "Customer Test Customer logged in via Google OAuth (customer.test@gmail.com)",
+      "ip": "127.0.0.1",
+      "status": "SUCCESS",
+      "id": "aud_1788374058039_d9bfr",
+      "timestamp": "2026-09-02T18:34:18.039Z"
+    },
+    {
+      "employeeId": "usr_owner_001",
+      "employeeName": "Akash Chondror Roy",
+      "employeeEmail": "akashchondroroy@protonmail.com",
+      "role": "SUPER_ADMIN",
+      "action": "EMPLOYEE_CREATE",
+      "resource": "Staff",
+      "resourceId": "usr_emp_mtkfmhx9",
+      "details": "Super Admin created individual account for shuvo (hanterpro899@gmail.com) with role ADMIN.",
+      "ip": "103.244.49.72",
+      "status": "SUCCESS",
+      "id": "aud_1788373865278_wz24w",
+      "timestamp": "2026-09-02T18:31:05.278Z"
+    },
+    {
+      "id": "aud_001",
+      "employeeId": "usr_emp_005",
+      "employeeName": "Faruk Hasan",
+      "employeeEmail": "faruk@akashstore.com",
+      "role": "ADMIN",
+      "action": "PAYMENT_VERIFY",
+      "resource": "Payment",
+      "resourceId": "pay_bkash_101",
+      "details": "Verified bKash payment for order #AKS-20260902-000101 (TrxID: BK90287162, Amount: ৳1,970)",
+      "ip": "103.145.118.22",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-02T08:30:00.000Z"
+    },
+    {
+      "id": "aud_002",
+      "employeeId": "usr_emp_002",
+      "employeeName": "Rahim Ahmed",
+      "employeeEmail": "rahim@akashstore.com",
+      "role": "ORDER_MANAGER",
+      "action": "ORDER_STATUS_CHANGE",
+      "resource": "Order",
+      "resourceId": "AKS-20260902-000103",
+      "details": "Rahim changed order #AKS-20260901-000103 from Confirmed to Processing.",
+      "ip": "103.145.118.22",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-02T09:00:00.000Z"
+    },
+    {
+      "id": "aud_003",
+      "employeeId": "usr_owner_001",
+      "employeeName": "Akash Chondror Roy",
+      "employeeEmail": "akashchondroroy@protonmail.com",
+      "role": "SUPER_ADMIN",
+      "action": "EMPLOYEE_CREATE",
+      "resource": "Staff",
+      "resourceId": "usr_emp_004",
+      "details": "Super Admin created employee account for Nusrat Jahan (SUPPORT_AGENT)",
+      "ip": "103.145.118.1",
+      "status": "SUCCESS",
+      "timestamp": "2026-04-01T10:00:00.000Z"
+    }
+  ],
+  "products": [
+    {
+      "id": "prod_001",
+      "name": "Samsung Galaxy A55 5G (8GB/256GB)",
+      "slug": "samsung-galaxy-a55-5g",
+      "sku": "AKS-SAM-A55-01",
+      "category": "Electronics",
+      "brand": "Samsung",
+      "shortDescription": "Super AMOLED 120Hz display, 50MP OIS camera, 5000mAh battery with official Bangladesh warranty.",
+      "description": "The Samsung Galaxy A55 5G brings metal frame premium design, Knox Vault security, and IP67 dust/water resistance. Perfect for high-speed multitasking and mobile photography.",
+      "price": 46999,
+      "compareAtPrice": 49999,
+      "stock": 14,
+      "lowStockThreshold": 5,
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&q=80",
+        "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800&q=80"
+      ],
+      "variants": [
+        {
+          "id": "v_a55_awesome_iceblue",
+          "name": "Awesome Iceblue / 8GB + 256GB",
+          "sku": "AKS-SAM-A55-BLU",
+          "price": 46999,
+          "stock": 8,
+          "attributes": {
+            "color": "Iceblue",
+            "storage": "256GB"
+          }
+        },
+        {
+          "id": "v_a55_awesome_navy",
+          "name": "Awesome Navy / 8GB + 256GB",
+          "sku": "AKS-SAM-A55-NVY",
+          "price": 46999,
+          "stock": 6,
+          "attributes": {
+            "color": "Navy",
+            "storage": "256GB"
+          }
+        }
+      ],
+      "specifications": {
+        "Display": "6.6\" FHD+ Super AMOLED 120Hz",
+        "Processor": "Exynos 1480 (4nm)",
+        "RearCamera": "50MP (OIS) + 12MP Ultra-Wide + 5MP Macro",
+        "FrontCamera": "32MP",
+        "Battery": "5000mAh (25W Fast Charging)",
+        "Warranty": "1 Year Official Warranty"
+      },
+      "tags": [
+        "smartphone",
+        "samsung",
+        "5g",
+        "electronics"
+      ],
+      "rating": 4.8,
+      "reviewCount": 38,
+      "createdAt": "2026-03-01T10:00:00.000Z"
+    },
+    {
+      "id": "prod_002",
+      "name": "Sony WH-1000XM5 Wireless Noise-Cancelling Headphones",
+      "slug": "sony-wh-1000xm5-headphones",
+      "sku": "AKS-SNY-XM5-02",
+      "category": "Gadgets",
+      "brand": "Sony",
+      "shortDescription": "Industry-leading noise cancellation with two processors and 8 microphones for unparalleled calls and music.",
+      "description": "Engineered to perfection with Auto NC Optimizer, lightweight design with soft fit leather, and up to 30 hours of continuous battery life.",
+      "price": 36500,
+      "compareAtPrice": 38990,
+      "stock": 9,
+      "lowStockThreshold": 3,
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&q=80",
+        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80"
+      ],
+      "variants": [
+        {
+          "id": "v_xm5_black",
+          "name": "Matte Black",
+          "sku": "AKS-SNY-XM5-BLK",
+          "price": 36500,
+          "stock": 5,
+          "attributes": {
+            "color": "Black"
+          }
+        },
+        {
+          "id": "v_xm5_silver",
+          "name": "Platinum Silver",
+          "sku": "AKS-SNY-XM5-SLV",
+          "price": 36500,
+          "stock": 4,
+          "attributes": {
+            "color": "Silver"
+          }
+        }
+      ],
+      "specifications": {
+        "BatteryLife": "Up to 30 Hours (NC On)",
+        "DriverUnit": "30mm Carbon Fiber",
+        "Microphones": "8 Microphones beamforming",
+        "Connectivity": "Bluetooth 5.2, LDAC, Multipoint",
+        "Weight": "250g"
+      },
+      "tags": [
+        "headphones",
+        "audio",
+        "sony",
+        "wireless",
+        "gadgets"
+      ],
+      "rating": 4.9,
+      "reviewCount": 52,
+      "createdAt": "2026-02-18T14:00:00.000Z"
+    },
+    {
+      "id": "prod_003",
+      "name": "Men's Premium Washed Cotton Slim Fit Casual Shirt",
+      "slug": "mens-premium-washed-cotton-shirt",
+      "sku": "AKS-FSH-SHIRT-03",
+      "category": "Fashion",
+      "brand": "Akash Heritage",
+      "shortDescription": "100% combed breathable cotton with tailored button-down collar and durable stitching.",
+      "description": "Crafted from premium long-staple cotton for year-round comfort in Bangladesh climate. Pre-shrunk and enzyme washed for ultra-soft hand feel.",
+      "price": 1850,
+      "compareAtPrice": 2200,
+      "stock": 45,
+      "lowStockThreshold": 10,
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&q=80",
+        "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&q=80"
+      ],
+      "variants": [
+        {
+          "id": "v_shirt_olive_m",
+          "name": "Olive Green / Medium",
+          "sku": "AKS-SHIRT-OLV-M",
+          "price": 1850,
+          "stock": 12,
+          "attributes": {
+            "color": "Olive",
+            "size": "M"
+          }
+        },
+        {
+          "id": "v_shirt_olive_l",
+          "name": "Olive Green / Large",
+          "sku": "AKS-SHIRT-OLV-L",
+          "price": 1850,
+          "stock": 15,
+          "attributes": {
+            "color": "Olive",
+            "size": "L"
+          }
+        },
+        {
+          "id": "v_shirt_navy_m",
+          "name": "Classic Navy / Medium",
+          "sku": "AKS-SHIRT-NVY-M",
+          "price": 1850,
+          "stock": 10,
+          "attributes": {
+            "color": "Navy",
+            "size": "M"
+          }
+        },
+        {
+          "id": "v_shirt_navy_l",
+          "name": "Classic Navy / Large",
+          "sku": "AKS-SHIRT-NVY-L",
+          "price": 1850,
+          "stock": 8,
+          "attributes": {
+            "color": "Navy",
+            "size": "L"
+          }
+        }
+      ],
+      "specifications": {
+        "Material": "100% Combed Cotton",
+        "Pattern": "Solid Enzyme Washed",
+        "Collar": "Spread Button-Down",
+        "Care": "Machine Wash Cold, Hang Dry"
+      },
+      "tags": [
+        "fashion",
+        "men",
+        "shirt",
+        "clothing"
+      ],
+      "rating": 4.7,
+      "reviewCount": 26,
+      "createdAt": "2026-03-12T11:00:00.000Z"
+    },
+    {
+      "id": "prod_004",
+      "name": "Anker 737 Power Bank (PowerCore 24K, 140W)",
+      "slug": "anker-737-power-bank-140w",
+      "sku": "AKS-ANK-737-04",
+      "category": "Gadgets",
+      "brand": "Anker",
+      "shortDescription": "Ultra-powerful 140W two-way fast charging with smart digital smart display and 24,000mAh capacity.",
+      "description": "Charge your laptop, tablet, and smartphone simultaneously at lightning speed. Equipped with PowerIQ 4.0 technology and ActiveShield 2.0 real-time temperature protection.",
+      "price": 13500,
+      "compareAtPrice": 14990,
+      "stock": 18,
+      "lowStockThreshold": 4,
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1609592424328-98e38d7c2a71?w=800&q=80",
+        "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&q=80"
+      ],
+      "variants": [
+        {
+          "id": "v_anker737_default",
+          "name": "Space Gray 24,000mAh",
+          "sku": "AKS-ANK-737-GRY",
+          "price": 13500,
+          "stock": 18,
+          "attributes": {
+            "color": "Space Gray"
+          }
+        }
+      ],
+      "specifications": {
+        "Capacity": "24,000mAh",
+        "TotalOutput": "140W Max",
+        "Ports": "2x USB-C + 1x USB-A",
+        "Display": "Smart Digital Color Display",
+        "Warranty": "18 Months Warranty"
+      },
+      "tags": [
+        "gadgets",
+        "powerbank",
+        "fast-charging",
+        "anker"
+      ],
+      "rating": 4.9,
+      "reviewCount": 41,
+      "createdAt": "2026-02-25T15:00:00.000Z"
+    },
+    {
+      "id": "prod_005",
+      "name": "Authentic Pure Sundarban Honey (500g Jar)",
+      "slug": "sundarban-raw-wild-honey-500g",
+      "sku": "AKS-GRO-HONEY-05",
+      "category": "Grocery",
+      "brand": "Bengal Pure",
+      "shortDescription": "100% natural unfiltered raw wild honey sustainably harvested from deep mangrove forests of Sundarban.",
+      "description": "Raw, unpasteurized, and rich in natural enzymes, antioxidants, and trace minerals. Directly collected from local traditional Mouwals in the Sundarbans.",
+      "price": 850,
+      "compareAtPrice": 950,
+      "stock": 60,
+      "lowStockThreshold": 15,
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80",
+        "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&q=80"
+      ],
+      "variants": [
+        {
+          "id": "v_honey_500g",
+          "name": "500g Glass Jar",
+          "sku": "AKS-HNY-500G",
+          "price": 850,
+          "stock": 35,
+          "attributes": {
+            "weight": "500g"
+          }
+        },
+        {
+          "id": "v_honey_1000g",
+          "name": "1kg Glass Jar",
+          "sku": "AKS-HNY-1000G",
+          "price": 1600,
+          "stock": 25,
+          "attributes": {
+            "weight": "1kg"
+          }
+        }
+      ],
+      "specifications": {
+        "Origin": "Sundarban Mangrove Forest, Bangladesh",
+        "Type": "Raw Multi-Flora Wild Honey",
+        "Packaging": "Food-Grade Air Tight Glass Jar",
+        "ShelfLife": "24 Months"
+      },
+      "tags": [
+        "grocery",
+        "organic",
+        "honey",
+        "bangladesh"
+      ],
+      "rating": 4.9,
+      "reviewCount": 88,
+      "createdAt": "2026-01-15T09:00:00.000Z"
+    },
+    {
+      "id": "prod_006",
+      "name": "CeraVe Moisturizing Cream with Ceramides (454g)",
+      "slug": "cerave-moisturizing-cream-454g",
+      "sku": "AKS-BTY-CRV-06",
+      "category": "Beauty",
+      "brand": "CeraVe",
+      "shortDescription": "Essential 3 ceramides and hyaluronic acid for barrier-restoring, 24-hour hydration.",
+      "description": "Developed with dermatologists, this non-comedogenic, fragrance-free formula uses MVE Delivery Technology for continuous hydration on dry to very dry skin.",
+      "price": 2450,
+      "compareAtPrice": 2800,
+      "stock": 22,
+      "lowStockThreshold": 6,
+      "status": "ACTIVE",
+      "images": [
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&q=80",
+        "https://images.unsplash.com/photo-1608248597359-54859a85bc1f?w=800&q=80"
+      ],
+      "variants": [
+        {
+          "id": "v_crv_454g",
+          "name": "454g Tub with Pump",
+          "sku": "AKS-CRV-454G",
+          "price": 2450,
+          "stock": 22,
+          "attributes": {
+            "size": "454g"
+          }
+        }
+      ],
+      "specifications": {
+        "SkinType": "Dry to Very Dry Skin",
+        "KeyIngredients": "Ceramides 1, 3, 6-II, Hyaluronic Acid",
+        "Formulation": "Fragrance-Free Cream",
+        "CountryOfOrigin": "USA"
+      },
+      "tags": [
+        "beauty",
+        "skincare",
+        "cerave",
+        "moisturizer"
+      ],
+      "rating": 4.8,
+      "reviewCount": 64,
+      "createdAt": "2026-02-10T13:00:00.000Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": "AKS-20260902-000101",
+      "customer": {
+        "fullName": "Mahmudul Hasan",
+        "phone": "01712345678",
+        "email": "mahmudul@gmail.com",
+        "division": "Rajshahi",
+        "district": "Bogura",
+        "upazila": "Sherpur",
+        "areaAddress": "Station Road, Ward 4",
+        "postalCode": "5840"
+      },
+      "items": [
+        {
+          "productId": "prod_003",
+          "variantId": "v_shirt_olive_m",
+          "productName": "Men's Premium Washed Cotton Slim Fit Casual Shirt",
+          "variantName": "Olive Green / Medium",
+          "sku": "AKS-SHIRT-OLV-M",
+          "image": "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&q=80",
+          "price": 1850,
+          "quantity": 1,
+          "total": 1850
+        }
+      ],
+      "subtotal": 1850,
+      "deliveryFee": 120,
+      "discount": 0,
+      "total": 1970,
+      "currency": "BDT",
+      "status": "CONFIRMED",
+      "paymentMethod": "BKASH",
+      "paymentStatus": "PAID",
+      "paymentId": "pay_bkash_101",
+      "timeline": [
+        {
+          "status": "PENDING",
+          "timestamp": "2026-09-02T08:00:00.000Z",
+          "note": "Order created by customer"
+        },
+        {
+          "status": "PAYMENT_VERIFICATION",
+          "timestamp": "2026-09-02T08:05:00.000Z",
+          "note": "Customer submitted bKash TrxID BK90287162"
+        },
+        {
+          "status": "CONFIRMED",
+          "timestamp": "2026-09-02T08:30:00.000Z",
+          "note": "Payment verified by Faruk Hasan (ADMIN)",
+          "updatedBy": "usr_emp_005"
+        }
+      ],
+      "createdAt": "2026-09-02T08:00:00.000Z",
+      "updatedAt": "2026-09-02T08:30:00.000Z"
+    },
+    {
+      "id": "AKS-20260902-000102",
+      "customer": {
+        "fullName": "Sadia Sultana",
+        "phone": "01898765432",
+        "email": "sadia.sultana@outlook.com",
+        "division": "Dhaka",
+        "district": "Dhaka",
+        "upazila": "Mirpur",
+        "areaAddress": "Section 10, Block C, House 24",
+        "postalCode": "1216"
+      },
+      "items": [
+        {
+          "productId": "prod_005",
+          "variantId": "v_honey_500g",
+          "productName": "Authentic Pure Sundarban Honey (500g Jar)",
+          "variantName": "500g Glass Jar",
+          "sku": "AKS-HNY-500G",
+          "image": "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80",
+          "price": 850,
+          "quantity": 2,
+          "total": 1700
+        }
+      ],
+      "subtotal": 1700,
+      "deliveryFee": 60,
+      "discount": 170,
+      "total": 1590,
+      "currency": "BDT",
+      "status": "PAYMENT_VERIFICATION",
+      "paymentMethod": "BKASH",
+      "paymentStatus": "VERIFICATION_PENDING",
+      "paymentId": "pay_bkash_102",
+      "timeline": [
+        {
+          "status": "PENDING",
+          "timestamp": "2026-09-02T10:10:00.000Z",
+          "note": "Order created by customer"
+        },
+        {
+          "status": "PAYMENT_VERIFICATION",
+          "timestamp": "2026-09-02T10:15:00.000Z",
+          "note": "bKash TrxID submitted: 9H7B29XQ11"
+        }
+      ],
+      "createdAt": "2026-09-02T10:10:00.000Z",
+      "updatedAt": "2026-09-02T10:15:00.000Z"
+    },
+    {
+      "id": "AKS-20260902-000103",
+      "customer": {
+        "fullName": "Kazi Tanvir",
+        "phone": "01511223344",
+        "division": "Chittagong",
+        "district": "Chittagong",
+        "upazila": "Panchlaish",
+        "areaAddress": "GEC Circle, Green View Tower, Apt 4B"
+      },
+      "items": [
+        {
+          "productId": "prod_004",
+          "variantId": "v_anker737_default",
+          "productName": "Anker 737 Power Bank (PowerCore 24K, 140W)",
+          "variantName": "Space Gray 24,000mAh",
+          "sku": "AKS-ANK-737-GRY",
+          "image": "https://images.unsplash.com/photo-1609592424328-98e38d7c2a71?w=800&q=80",
+          "price": 13500,
+          "quantity": 1,
+          "total": 13500
+        }
+      ],
+      "subtotal": 13500,
+      "deliveryFee": 0,
+      "discount": 0,
+      "total": 13500,
+      "currency": "BDT",
+      "status": "PROCESSING",
+      "paymentMethod": "COD",
+      "paymentStatus": "UNPAID",
+      "paymentId": "pay_cod_103",
+      "timeline": [
+        {
+          "status": "PENDING",
+          "timestamp": "2026-09-01T16:00:00.000Z",
+          "note": "Cash on Delivery order created"
+        },
+        {
+          "status": "CONFIRMED",
+          "timestamp": "2026-09-01T16:30:00.000Z",
+          "note": "Customer phoned & order confirmed by Rahim Ahmed (ORDER_MANAGER)",
+          "updatedBy": "usr_emp_002"
+        },
+        {
+          "status": "PROCESSING",
+          "timestamp": "2026-09-02T09:00:00.000Z",
+          "note": "Dispatched to packaging department",
+          "updatedBy": "usr_emp_002"
+        }
+      ],
+      "createdAt": "2026-09-01T16:00:00.000Z",
+      "updatedAt": "2026-09-02T09:00:00.000Z"
+    }
+  ],
+  "payments": [
+    {
+      "id": "pay_bkash_101",
+      "orderId": "AKS-20260902-000101",
+      "method": "BKASH",
+      "status": "PAID",
+      "verificationStatus": "VERIFIED",
+      "amount": 1970,
+      "currency": "BDT",
+      "senderPhone": "01712345678",
+      "receiverPhone": "01874839665",
+      "transactionId": "BK90287162",
+      "verifiedAt": "2026-09-02T08:30:00.000Z",
+      "verifiedBy": "usr_emp_005",
+      "createdAt": "2026-09-02T08:05:00.000Z",
+      "updatedAt": "2026-09-02T08:30:00.000Z"
+    },
+    {
+      "id": "pay_bkash_102",
+      "orderId": "AKS-20260902-000102",
+      "method": "BKASH",
+      "status": "VERIFICATION_PENDING",
+      "verificationStatus": "PENDING",
+      "amount": 1590,
+      "currency": "BDT",
+      "senderPhone": "01898765432",
+      "receiverPhone": "01874839665",
+      "transactionId": "9H7B29XQ11",
+      "createdAt": "2026-09-02T10:15:00.000Z",
+      "updatedAt": "2026-09-02T10:15:00.000Z"
+    },
+    {
+      "id": "pay_cod_103",
+      "orderId": "AKS-20260902-000103",
+      "method": "COD",
+      "status": "UNPAID",
+      "verificationStatus": "NONE",
+      "amount": 13500,
+      "currency": "BDT",
+      "createdAt": "2026-09-01T16:00:00.000Z",
+      "updatedAt": "2026-09-01T16:00:00.000Z"
+    }
+  ],
+  "coupons": [
+    {
+      "code": "AKASH10",
+      "discountType": "PERCENTAGE",
+      "discountValue": 10,
+      "minOrderAmount": 1000,
+      "maxDiscount": 500,
+      "usageCount": 14,
+      "usageLimit": 500,
+      "expiryDate": "2026-12-31T23:59:59.000Z",
+      "isActive": true
+    },
+    {
+      "code": "WELCOME200",
+      "discountType": "FIXED",
+      "discountValue": 200,
+      "minOrderAmount": 1500,
+      "usageCount": 22,
+      "usageLimit": 300,
+      "expiryDate": "2026-12-31T23:59:59.000Z",
+      "isActive": true
+    }
+  ],
+  "settings": {
+    "storeName": "AKASH STORE",
+    "ownerName": "Akash Chondror Roy",
+    "headquarters": "Sherpur, Bogura, Bangladesh",
+    "contactEmail": "akashchondroroy@protonmail.com",
+    "supportPhoneDisplay": "Available via Support Agent",
+    "currency": "BDT",
+    "currencySymbol": "৳",
+    "bkashNumber": "01874839665",
+    "bkashEnabled": true,
+    "nagadNumber": "",
+    "nagadEnabled": false,
+    "codEnabled": true,
+    "codRequiresConfirmation": true,
+    "insideDhakaFee": 60,
+    "outsideDhakaFee": 120,
+    "freeDeliveryThreshold": 2000
+  },
+  "orderSequence": 104
+}

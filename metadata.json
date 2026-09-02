@@ -1,0 +1,6 @@
+{
+  "name": "AKASH STORE - Admin & E-Commerce",
+  "description": "Production-ready Bangladesh e-commerce platform with RBAC staff management, secure bKash/Nagad/COD payment flows, and customer storefront.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
