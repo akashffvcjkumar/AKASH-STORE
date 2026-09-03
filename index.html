@@ -9,6 +9,20 @@
     <meta property="og:description" content="Production-ready Bangladesh e-commerce platform with RBAC staff management, secure bKash/Nagad/COD payment flows, and customer storefront." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      // Suppress benign WebSocket connection failure unhandled rejections inside sandboxed iframe previews
+      window.addEventListener('unhandledrejection', function(event) {
+        var reason = event && event.reason;
+        var msg = (reason && (reason.message || String(reason))) || '';
+        if (typeof msg === 'string' && (
+          msg.indexOf('WebSocket') !== -1 ||
+          msg.indexOf('websocket') !== -1 ||
+          msg.indexOf('failed to connect to websocket') !== -1
+        )) {
+          event.preventDefault();
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

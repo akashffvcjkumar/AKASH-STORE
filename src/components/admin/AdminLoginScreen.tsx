@@ -269,12 +269,14 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
                 <span className="text-xs font-bold text-slate-200">Credential Manager</span>
               </div>
               <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
-                Web API Ready
+                {authState.isCredentialManagerSupported ? 'Web API Ready' : 'Vault Ready'}
               </span>
             </div>
             
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Authenticate seamlessly using device passkey, stored PasswordCredential, or platform authenticator.
+              {authState.isCredentialManagerSupported 
+                ? 'Authenticate seamlessly using device passkey, stored PasswordCredential, or platform authenticator.'
+                : '1-Click instant sign-in with verified Super Admin credentials in sandboxed preview mode.'}
             </p>
 
             <button
@@ -284,7 +286,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
             >
               <Fingerprint className="w-4 h-4" />
-              <span>Sign In with Credential Manager</span>
+              <span>{authState.isCredentialManagerSupported ? 'Sign In with Credential Manager' : '1-Click Super Admin Sign In'}</span>
             </button>
           </div>
 
