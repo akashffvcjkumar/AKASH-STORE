@@ -78,9 +78,9 @@ router.get('/admin/all', authenticateStaff, (req: AuthenticatedRequest, res: Res
 });
 
 /**
- * Protected: POST /api/admin/products
+ * Protected: POST /api/products or /api/admin/products
  */
-router.post('/admin', authenticateStaff, requirePermission('canManageProducts'), (req: AuthenticatedRequest, res: Response) => {
+router.post(['/', '/admin'], authenticateStaff, requirePermission('canManageProducts'), (req: AuthenticatedRequest, res: Response) => {
   const user = req.user!;
   const ip = extractClientIp(req);
   const data = req.body;
@@ -136,9 +136,9 @@ router.post('/admin', authenticateStaff, requirePermission('canManageProducts'),
 });
 
 /**
- * Protected: PUT /api/admin/products/:id
+ * Protected: PUT /api/products/:id or /api/admin/products/:id
  */
-router.put('/admin/:id', authenticateStaff, requirePermission('canManageProducts'), (req: AuthenticatedRequest, res: Response) => {
+router.put(['/:id', '/admin/:id'], authenticateStaff, requirePermission('canManageProducts'), (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   const user = req.user!;
   const ip = extractClientIp(req);
@@ -195,6 +195,41 @@ router.put('/admin/:id', authenticateStaff, requirePermission('canManageProducts
   });
 
   res.json(product);
+});
+
+/**
+ * Protected: DELETE /api/products/:id or /api/admin/products/:id
+ */
+router.delete(['/:id', '/admin/:id'], authenticateStaff, requirePermission('canManageProducts'), (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+  const user = req.user!;
+  const ip = extractClientIp(req);
+
+  const products = db.getProducts();
+  const index = products.findIndex(p => p.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Product not found.' });
+  }
+
+  const deletedProduct = products[index];
+  products.splice(index, 1);
+  db.setProducts(products);
+
+  db.recordAuditLog({
+    employeeId: user.id,
+    employeeName: user.name,
+    employeeEmail: user.email,
+    role: user.role,
+    action: 'PRODUCT_DELETE',
+    resource: 'Product',
+    resourceId: deletedProduct.id,
+    details: `${user.name} deleted product "${deletedProduct.name}" (SKU: ${deletedProduct.sku}, ID: ${deletedProduct.id})`,
+    ip,
+    status: 'SUCCESS',
+  });
+
+  res.json({ message: `Product "${deletedProduct.name}" deleted successfully.`, id });
 });
 
 /**

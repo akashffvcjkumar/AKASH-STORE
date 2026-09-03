@@ -40,7 +40,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
   onCancel,
 }) => {
   const { state: authState, signIn, signInWithCredentialManager, validateRoleClaimForAdminRoute } = useAuthentication();
-  const { setActiveView, showToast, settings } = useStore();
+  const { setActiveView, showToast, settings, currentCustomer, logoutCustomer } = useStore();
 
   const [email, setEmail] = useState('akashchondroroy@protonmail.com');
   const [password, setPassword] = useState('akash123456');
@@ -232,6 +232,35 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg relative z-10">
         <div className="bg-slate-900/90 border border-slate-800 backdrop-blur-md py-8 px-4 sm:px-10 rounded-2xl shadow-2xl space-y-6">
           
+          {/* Customer Detection & Route Separation Notice */}
+          {currentCustomer && (
+            <div className="p-4 bg-rose-950/60 border border-rose-800/80 rounded-xl space-y-2">
+              <div className="flex items-center gap-2 text-rose-300 font-bold text-xs">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>Customer Google Account Detected ({currentCustomer.name})</span>
+              </div>
+              <p className="text-[11px] text-rose-200/80 leading-relaxed">
+                This route (<code className="font-mono text-rose-300">/admin-secure-login</code>) is strictly restricted to Super Admins, Admins, and Employees. Customer Google OAuth accounts are completely barred from accessing admin privileges.
+              </p>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveView('customer')}
+                  className="px-3 py-1.5 rounded-lg bg-rose-900 hover:bg-rose-800 text-white font-semibold text-xs transition-colors cursor-pointer"
+                >
+                  Return to Storefront
+                </button>
+                <button
+                  type="button"
+                  onClick={() => logoutCustomer()}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors cursor-pointer"
+                >
+                  Sign Out of Customer
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Credential Manager Banner & Quick Action */}
           <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl space-y-3">
             <div className="flex items-center justify-between">

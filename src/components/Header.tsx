@@ -80,9 +80,9 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Customer Account Indicator / Google Sign-in */}
             {currentCustomer ? (
               <button
-                onClick={() => setIsCustomerAuthModalOpen(true)}
-                className="flex items-center gap-1.5 py-0.5 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors border border-slate-700"
-                title="Customer Account Details"
+                onClick={() => setActiveView('customer_login')}
+                className="flex items-center gap-1.5 py-0.5 px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors border border-slate-700 cursor-pointer"
+                title="Customer Portal (/login)"
               >
                 {currentCustomer.avatar ? (
                   <img 
@@ -99,35 +99,27 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             ) : (
               <button
-                onClick={() => setIsCustomerAuthModalOpen(true)}
-                className="flex items-center gap-1 text-slate-300 hover:text-white transition-colors py-0.5 px-2 rounded bg-slate-800 hover:bg-slate-700 text-xs"
+                onClick={() => setActiveView('customer_login')}
+                className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors py-0.5 px-2.5 rounded bg-slate-800 hover:bg-slate-700 text-xs cursor-pointer border border-slate-700"
+                title="Customer Sign In (/login)"
               >
                 <span className="w-3 h-3 rounded-full bg-emerald-500 text-slate-900 flex items-center justify-center text-[8px] font-bold">G</span>
-                <span>Google Sign-In</span>
+                <span>Sign In (/login)</span>
               </button>
             )}
 
-            {/* Admin Portal Entry / Switcher with RBAC Protection */}
-            {currentStaff ? (
+            {/* Authenticated Staff Switcher (only shows if staff session is active) */}
+            {currentStaff && (
               <button
                 onClick={() => setActiveView(activeView === 'admin' ? 'customer' : 'admin')}
-                className={`flex items-center gap-1.5 py-0.5 px-2.5 rounded font-medium transition-all ${
+                className={`flex items-center gap-1.5 py-0.5 px-2.5 rounded font-medium text-xs transition-all cursor-pointer ${
                   activeView === 'admin'
                     ? 'bg-emerald-500 text-white shadow-xs'
                     : 'bg-indigo-900 text-indigo-200 hover:bg-indigo-800'
                 }`}
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
-                <span>{activeView === 'admin' ? 'Exit Admin' : `Admin: ${currentStaff.role}`}</span>
-              </button>
-            ) : (
-              <button
-                onClick={navigateToAdmin}
-                className="flex items-center gap-1.5 py-0.5 px-2.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs border border-slate-700 transition-colors"
-                title="Staff Portal: Protected by RBAC. Regular customers are blocked with 403 Forbidden."
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span>Staff Portal</span>
+                <span>{activeView === 'admin' ? 'Exit Admin' : `Staff: ${currentStaff.role}`}</span>
               </button>
             )}
           </div>

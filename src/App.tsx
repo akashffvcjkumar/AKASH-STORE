@@ -11,6 +11,7 @@ import { AiAssistantModal } from './components/AiAssistantModal.js';
 import { LegalPages } from './components/LegalPages.js';
 import { AdminLayout } from './components/admin/AdminLayout.js';
 import { AdminLoginScreen } from './components/admin/AdminLoginScreen.js';
+import { CustomerLoginScreen } from './components/CustomerLoginScreen.js';
 import { Forbidden403Screen } from './components/admin/Forbidden403Screen.js';
 import { AdminRouteGuard } from './components/admin/AdminRouteGuard.js';
 import { CustomerAuthModal } from './components/CustomerAuthModal.js';
@@ -47,6 +48,7 @@ const Storefront: React.FC = () => {
     activeLegalPage,
     setActiveLegalPage,
     currentStaff,
+    navigateToAdminLogin,
     toasts,
     removeToast
   } = useStore();
@@ -65,8 +67,17 @@ const Storefront: React.FC = () => {
   if (activeView === 'forbidden_403') {
     return (
       <Forbidden403Screen 
-        attemptedUrl="/admin"
+        attemptedUrl="/admin-secure-login"
         onBackToHome={() => setActiveView('customer')}
+      />
+    );
+  }
+
+  if (activeView === 'customer_login') {
+    return (
+      <CustomerLoginScreen 
+        onSuccessNavigate={() => setActiveView('customer')}
+        onCancel={() => setActiveView('customer')}
       />
     );
   }
@@ -337,16 +348,16 @@ const Storefront: React.FC = () => {
             <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-2.5">
               <div className="flex items-center gap-1.5 text-slate-200 font-bold">
                 <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Admin & Staff Portal</span>
+                <span>Staff & Admin Portal</span>
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Authorized store employees and administrators can manage individual staff accounts, RBAC roles, bKash verification queue, and orders.
+                Separate portal strictly for Super Admins, Admins, and Employees via <code className="text-emerald-400 font-mono text-[10px]">/admin-secure-login</code> with email & password authentication.
               </p>
               <button
-                onClick={() => setActiveView('admin_login')}
-                className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                onClick={navigateToAdminLogin}
+                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:text-white font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <span>Staff & Admin Sign In</span>
+                <span>Staff Portal (/admin-secure-login)</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>

@@ -9,13 +9,16 @@ import {
   Clock, 
   MapPin, 
   Phone, 
-  AlertCircle 
+  AlertCircle,
+  RotateCcw,
+  XCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { OrderRecord, OrderStatus } from '../../types.js';
 import { useStore } from '../../context/StoreContext.js';
 
 export const OrdersManager: React.FC = () => {
-  const { token, showToast, currentStaff } = useStore();
+  const { token, showToast, currentStaff, refreshProducts } = useStore();
 
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +30,18 @@ export const OrdersManager: React.FC = () => {
   const [newStatus, setNewStatus] = useState<OrderStatus>('PROCESSING');
   const [timelineNote, setTimelineNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Cancellation Modal State
+  const [orderToCancel, setOrderToCancel] = useState<OrderRecord | null>(null);
+  const [cancelReason, setCancelReason] = useState('Customer requested cancellation');
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Refund Modal State
+  const [orderToRefund, setOrderToRefund] = useState<OrderRecord | null>(null);
+  const [refundAmount, setRefundAmount] = useState<number>(0);
+  const [refundReason, setRefundReason] = useState('Defective item / return approved');
+  const [restockOnRefund, setRestockOnRefund] = useState(true);
+  const [isRefunding, setIsRefunding] = useState(false);
 
   const fetchOrders = async () => {
     if (!token) return;
@@ -89,6 +104,84 @@ export const OrdersManager: React.FC = () => {
       showToast('Network error updating status', 'error');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleExecuteCancel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orderToCancel) return;
+    setIsCancelling(true);
+    try {
+      const res = await fetch(`/api/orders/${orderToCancel.id}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason: cancelReason.trim() }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || 'Failed to cancel order', 'error');
+        return;
+      }
+
+      showToast(`Order #${orderToCancel.id} cancelled. Inventory stock restored to catalog.`);
+      setOrderToCancel(null);
+      if (selectedOrder?.id === orderToCancel.id) {
+        setSelectedOrder(data.order);
+      }
+      fetchOrders();
+      refreshProducts();
+    } catch {
+      showToast('Network error cancelling order', 'error');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handleExecuteRefund = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orderToRefund) return;
+    if (refundAmount <= 0) {
+      showToast('Please enter a valid refund amount', 'error');
+      return;
+    }
+    setIsRefunding(true);
+    try {
+      const res = await fetch(`/api/orders/${orderToRefund.id}/refund`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          amount: Number(refundAmount),
+          reason: refundReason.trim(),
+          restockItems: restockOnRefund
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || 'Failed to issue refund', 'error');
+        return;
+      }
+
+      showToast(`Refund of ৳${refundAmount.toLocaleString()} processed for order #${orderToRefund.id}. Audit log recorded.`);
+      setOrderToRefund(null);
+      if (selectedOrder?.id === orderToRefund.id) {
+        setSelectedOrder(data.order);
+      }
+      fetchOrders();
+      if (restockOnRefund) {
+        refreshProducts();
+      }
+    } catch {
+      showToast('Network error issuing refund', 'error');
+    } finally {
+      setIsRefunding(false);
     }
   };
 
@@ -369,6 +462,40 @@ export const OrdersManager: React.FC = () => {
                 </button>
               </form>
 
+              {/* Critical Order Actions: Cancel & Refund */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                  Critical Order Actions & Stock Management
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Cancelling or refunding an order automatically restores item stock levels to the product inventory and logs the action under your staff account.
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {selectedOrder.status !== 'CANCELLED' && (
+                    <button
+                      type="button"
+                      onClick={() => setOrderToCancel(selectedOrder)}
+                      className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/70 hover:bg-rose-100 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Cancel Order & Restock</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOrderToRefund(selectedOrder);
+                      setRefundAmount(selectedOrder.total);
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/70 hover:bg-amber-100 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Issue Refund (bKash / Nagad / Bank)</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Order Timeline */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
@@ -401,6 +528,140 @@ export const OrdersManager: React.FC = () => {
                 Done
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* CANCEL ORDER MODAL */}
+      {orderToCancel && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-rose-200 dark:border-rose-900/60 space-y-4 text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+              <div className="p-3 bg-rose-100 dark:bg-rose-950/80 rounded-xl">
+                <XCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Cancel Order #{orderToCancel.id}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Restores items to inventory and logs cancellation.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleExecuteCancel} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Cancellation Reason:
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg focus:outline-none"
+                  placeholder="e.g. Customer unreachable / requested cancellation via phone"
+                />
+              </div>
+
+              <div className="p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-[11px] text-amber-800 dark:text-amber-300">
+                Notice: All items in this order will automatically be returned to available warehouse stock.
+              </div>
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  disabled={isCancelling}
+                  onClick={() => setOrderToCancel(null)}
+                  className="flex-1 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs cursor-pointer"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCancelling}
+                  className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs cursor-pointer shadow-sm transition-colors"
+                >
+                  {isCancelling ? 'Processing...' : 'Confirm Cancellation'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* REFUND MODAL */}
+      {orderToRefund && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-amber-200 dark:border-amber-900/60 space-y-4 text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3 text-amber-600 dark:text-amber-400">
+              <div className="p-3 bg-amber-100 dark:bg-amber-950/80 rounded-xl">
+                <RotateCcw className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Process Refund: #{orderToRefund.id}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Order total was ৳{orderToRefund.total.toLocaleString()}</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleExecuteRefund} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Refund Amount (৳) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={1}
+                  max={orderToRefund.total}
+                  value={refundAmount}
+                  onChange={(e) => setRefundAmount(Number(e.target.value))}
+                  className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Refund Reason / Memo:
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg focus:outline-none"
+                  placeholder="e.g. Return received in warehouse, refunded via bKash to customer number"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="restockCheckbox"
+                  checked={restockOnRefund}
+                  onChange={(e) => setRestockOnRefund(e.target.checked)}
+                  className="rounded text-emerald-600 focus:ring-emerald-500"
+                />
+                <label htmlFor="restockCheckbox" className="text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                  Restock refunded items back into catalog inventory
+                </label>
+              </div>
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  disabled={isRefunding}
+                  onClick={() => setOrderToRefund(null)}
+                  className="flex-1 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isRefunding}
+                  className="flex-1 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs cursor-pointer shadow-sm transition-colors"
+                >
+                  {isRefunding ? 'Recording...' : 'Authorize Refund'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

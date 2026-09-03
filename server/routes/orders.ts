@@ -276,10 +276,10 @@ router.get('/track/:orderIdOrPhone', (req: Request, res: Response) => {
 });
 
 /**
- * Protected: GET /api/admin/orders
+ * Protected: GET /api/orders or /api/admin/orders
  * List orders for admin dashboard
  */
-router.get('/admin/list', authenticateStaff, requirePermission('canManageOrders'), (req: AuthenticatedRequest, res: Response) => {
+router.get(['/', '/admin/list', '/admin'], authenticateStaff, requirePermission('canManageOrders'), (req: AuthenticatedRequest, res: Response) => {
   const { status, search } = req.query;
   let orders = db.getOrders();
 
@@ -300,10 +300,10 @@ router.get('/admin/list', authenticateStaff, requirePermission('canManageOrders'
 });
 
 /**
- * Protected: PATCH /api/admin/orders/:id/status
+ * Protected: PATCH /api/orders/:id/status or /api/admin/orders/:id/status
  * Update order fulfillment status with audit logging
  */
-router.patch('/admin/:id/status', authenticateStaff, requirePermission('canManageOrders'), (req: AuthenticatedRequest, res: Response) => {
+router.patch(['/:id/status', '/admin/:id/status'], authenticateStaff, requirePermission('canManageOrders'), (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   const { status, note } = req.body;
   const user = req.user!;
@@ -330,7 +330,7 @@ router.patch('/admin/:id/status', authenticateStaff, requirePermission('canManag
 
   db.setOrders(orders);
 
-  // Record audit log (e.g. "Rahim changed order #AKS-20260902-000123 from Processing to Shipped.")
+  // Record audit log
   db.recordAuditLog({
     employeeId: user.id,
     employeeName: user.name,
@@ -344,14 +344,143 @@ router.patch('/admin/:id/status', authenticateStaff, requirePermission('canManag
     status: 'SUCCESS',
   });
 
-  res.json(order);
+  res.json({ message: 'Order status updated successfully', order });
 });
 
 /**
- * Protected: POST /api/admin/orders/:id/notes
- * Add support / internal notes to an order (ORDER_MANAGER, SUPPORT_AGENT, ADMIN, SUPER_ADMIN)
+ * Protected: POST /api/orders/:id/refund or /api/admin/orders/:id/refund
+ * Process order refund with audit logging and optional inventory restoration
  */
-router.post('/admin/:id/notes', authenticateStaff, requirePermission('canAddSupportNotes'), (req: AuthenticatedRequest, res: Response) => {
+router.post(['/:id/refund', '/admin/:id/refund'], authenticateStaff, requirePermission('canManageRefunds'), (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+  const { reason, amount, restockItems } = req.body;
+  const user = req.user!;
+  const ip = extractClientIp(req);
+
+  const orders = db.getOrders();
+  const order = orders.find(o => o.id === id);
+
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found.' });
+  }
+
+  const refundAmount = amount ? Number(amount) : order.total;
+  order.paymentStatus = 'REFUNDED';
+  order.status = 'REFUNDED' as any;
+  order.updatedAt = new Date().toISOString();
+
+  const refundNote = `Refund of ৳${refundAmount.toLocaleString()} approved by ${user.name} (${user.role}). Reason: ${reason || 'Customer request / defective item'}`;
+  order.timeline.push({
+    status: 'CANCELLED',
+    timestamp: new Date().toISOString(),
+    note: refundNote,
+    updatedBy: user.id,
+  });
+
+  // If restock items requested, restore product stock
+  if (restockItems !== false) {
+    const products = db.getProducts();
+    order.items.forEach(item => {
+      const prod = products.find(p => p.id === item.productId);
+      if (prod) {
+        prod.stock += item.quantity;
+        if (item.variantId) {
+          const v = prod.variants.find(va => va.id === item.variantId);
+          if (v) v.stock += item.quantity;
+        }
+      }
+    });
+    db.setProducts(products);
+  }
+
+  db.setOrders(orders);
+
+  db.recordAuditLog({
+    employeeId: user.id,
+    employeeName: user.name,
+    employeeEmail: user.email,
+    role: user.role,
+    action: 'ORDER_REFUND',
+    resource: 'Order',
+    resourceId: order.id,
+    details: `${user.name} processed refund of ৳${refundAmount.toLocaleString()} for order #${order.id}. ${refundNote}`,
+    ip,
+    status: 'SUCCESS',
+  });
+
+  res.json({ message: `Refund processed successfully for order #${order.id}.`, order });
+});
+
+/**
+ * Protected: POST /api/orders/:id/cancel or /api/admin/orders/:id/cancel
+ * Cancel order and automatically restore product stock
+ */
+router.post(['/:id/cancel', '/admin/:id/cancel'], authenticateStaff, requirePermission('canManageOrders'), (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+  const user = req.user!;
+  const ip = extractClientIp(req);
+
+  const orders = db.getOrders();
+  const order = orders.find(o => o.id === id);
+
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found.' });
+  }
+
+  if (order.status === 'CANCELLED') {
+    return res.status(400).json({ error: 'Order is already cancelled.' });
+  }
+
+  const oldStatus = order.status;
+  order.status = 'CANCELLED';
+  order.updatedAt = new Date().toISOString();
+
+  const cancelNote = `Order cancelled by ${user.name} (${user.role}). Reason: ${reason || 'Customer requested cancellation / Unreachable'}`;
+  order.timeline.push({
+    status: 'CANCELLED',
+    timestamp: new Date().toISOString(),
+    note: cancelNote,
+    updatedBy: user.id,
+  });
+
+  // Restore inventory stock back
+  const products = db.getProducts();
+  order.items.forEach(item => {
+    const prod = products.find(p => p.id === item.productId);
+    if (prod) {
+      prod.stock += item.quantity;
+      if (item.variantId) {
+        const v = prod.variants.find(va => va.id === item.variantId);
+        if (v) v.stock += item.quantity;
+      }
+    }
+  });
+  db.setProducts(products);
+
+  db.setOrders(orders);
+
+  db.recordAuditLog({
+    employeeId: user.id,
+    employeeName: user.name,
+    employeeEmail: user.email,
+    role: user.role,
+    action: 'ORDER_CANCELLED',
+    resource: 'Order',
+    resourceId: order.id,
+    details: `${user.name} cancelled order #${order.id} (previously ${oldStatus}). Restocked items. Note: ${cancelNote}`,
+    ip,
+    status: 'SUCCESS',
+  });
+
+  res.json({ message: `Order #${order.id} has been cancelled and items restocked.`, order });
+});
+
+/**
+ * Protected: POST /api/orders/:id/notes or /api/admin/orders/:id/notes
+ * Add support / internal notes to an order
+ */
+router.post(['/:id/notes', '/admin/:id/notes'], authenticateStaff, requirePermission('canAddSupportNotes'), (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   const { note } = req.body;
   const user = req.user!;

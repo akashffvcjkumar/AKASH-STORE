@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Package, 
   Plus, 
@@ -7,7 +7,10 @@ import {
   Trash2, 
   AlertTriangle, 
   CheckCircle2, 
-  RefreshCw 
+  RefreshCw,
+  Upload,
+  Image as ImageIcon,
+  DollarSign
 } from 'lucide-react';
 import { Product } from '../../types.js';
 import { useStore } from '../../context/StoreContext.js';
@@ -19,6 +22,8 @@ export const ProductsManager: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form states
   const [name, setName] = useState('');
@@ -30,6 +35,8 @@ export const ProductsManager: React.FC = () => {
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const openCreateModal = () => {
     setName('');
@@ -59,6 +66,35 @@ export const ProductsManager: React.FC = () => {
     setIsCreating(false);
   };
 
+  // Image file upload handler (converts uploaded file to base64 data URL)
+  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, WEBP).', 'error');
+      return;
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      showToast('Image size exceeds 4MB limit. Please choose a smaller image.', 'error');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageUrl(reader.result as string);
+      setIsUploadingImage(false);
+      showToast('Product image uploaded successfully!', 'success');
+    };
+    reader.onerror = () => {
+      setIsUploadingImage(false);
+      showToast('Failed to read image file.', 'error');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || price <= 0) {
@@ -75,7 +111,7 @@ export const ProductsManager: React.FC = () => {
         compareAtPrice: compareAtPrice > 0 ? Number(compareAtPrice) : undefined,
         stock: Number(stock),
         lowStockThreshold: Number(lowStockThreshold),
-        images: [imageUrl.trim()],
+        images: [imageUrl.trim() || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80'],
         description: description.trim(),
       };
 
@@ -102,12 +138,43 @@ export const ProductsManager: React.FC = () => {
         return;
       }
 
-      showToast(editingProduct ? 'Product updated successfully.' : 'New product created.');
+      showToast(editingProduct ? `Product "${name}" updated successfully.` : `Product "${name}" created.`);
       setEditingProduct(null);
       setIsCreating(false);
+      // Immediately reflect on customer-facing storefront
       refreshProducts();
     } catch {
       showToast('Network error saving product', 'error');
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!productToDelete) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/products/${productToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        showToast(`Product "${productToDelete.name}" deleted. Changes reflected on customer store.`);
+        setProductToDelete(null);
+        if (editingProduct?.id === productToDelete.id) {
+          setEditingProduct(null);
+        }
+        // Immediately reflect on customer-facing storefront
+        refreshProducts();
+      } else {
+        const data = await res.json();
+        showToast(data.error || 'Failed to delete product', 'error');
+      }
+    } catch {
+      showToast('Network error deleting product', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -278,13 +345,22 @@ export const ProductsManager: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => openEditModal(p)}
-                        className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                        title="Edit product"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => openEditModal(p)}
+                          className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title="Edit product details & pricing"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setProductToDelete(p)}
+                          className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition-colors cursor-pointer"
+                          title="Delete product from catalog"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -293,6 +369,53 @@ export const ProductsManager: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* DELETE CONFIRMATION DIALOG */}
+      {productToDelete && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-rose-200 dark:border-rose-900/60 space-y-4 text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+              <div className="p-3 bg-rose-100 dark:bg-rose-950/80 rounded-xl">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Delete Product</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">This action will remove the item from the catalog.</p>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
+              <div><strong className="text-slate-900 dark:text-slate-100">Product:</strong> {productToDelete.name}</div>
+              <div><strong className="text-slate-900 dark:text-slate-100">SKU:</strong> {productToDelete.sku}</div>
+              <div><strong className="text-slate-900 dark:text-slate-100">Price:</strong> ৳{productToDelete.price.toLocaleString()}</div>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              Are you sure you want to permanently delete this product? It will immediately disappear from the customer-facing storefront.
+            </p>
+
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setProductToDelete(null)}
+                className="flex-1 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleDeleteProduct}
+                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs cursor-pointer shadow-sm transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isDeleting ? 'Deleting...' : 'Confirm Delete'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CREATE / EDIT MODAL */}
       {(isCreating || editingProduct) && (
@@ -396,14 +519,56 @@ export const ProductsManager: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Image URL</label>
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg focus:outline-none"
-                />
+              {/* IMAGE UPLOAD LOGIC */}
+              <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/80">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Product Image & Upload
+                  </label>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">File upload or URL</span>
+                </div>
+
+                {/* Image Preview & Upload Button */}
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0 border border-slate-300 dark:border-slate-600 flex items-center justify-center">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="Product preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-slate-400" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 space-y-1.5">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleImageFileUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingImage}
+                      className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 text-xs font-semibold flex items-center gap-1.5 text-slate-700 dark:text-slate-200 cursor-pointer shadow-2xs"
+                    >
+                      <Upload className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>{isUploadingImage ? 'Reading image...' : 'Upload Image File'}</span>
+                    </button>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Supports PNG, JPG, WEBP from your computer</p>
+                  </div>
+                </div>
+
+                {/* Direct URL input */}
+                <div>
+                  <input
+                    type="url"
+                    placeholder="Or enter image URL (https://...)"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div>
@@ -416,7 +581,22 @@ export const ProductsManager: React.FC = () => {
                 />
               </div>
 
-              <div className="flex gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+                {editingProduct && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const prod = editingProduct;
+                      setEditingProduct(null);
+                      setProductToDelete(prod);
+                    }}
+                    className="py-2 px-3 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-300 font-semibold text-xs cursor-pointer transition-colors flex items-center gap-1"
+                    title="Delete this product"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {

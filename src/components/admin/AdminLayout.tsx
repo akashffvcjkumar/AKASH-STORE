@@ -21,6 +21,7 @@ import { OrdersManager } from './OrdersManager.js';
 import { ProductsManager } from './ProductsManager.js';
 import { AuditLogsView } from './AuditLogsView.js';
 import { SettingsManager } from './SettingsManager.js';
+import { CustomersManager } from './CustomersManager.js';
 import { StaffRole } from '../../types.js';
 
 export const AdminLayout: React.FC = () => {
@@ -249,6 +250,19 @@ export const AdminLayout: React.FC = () => {
             <span>Catalog & Stock</span>
           </button>
 
+          {/* Customers & CRM */}
+          <button
+            onClick={() => setAdminTab('customers')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              adminTab === 'customers'
+                ? 'bg-slate-900 text-white shadow-2xs dark:bg-emerald-500/20 dark:text-emerald-300 dark:border dark:border-emerald-500/40'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+            }`}
+          >
+            <UserCheck className="w-4 h-4 text-teal-500 dark:text-teal-400" />
+            <span>Customers & Accounts</span>
+          </button>
+
           {/* Audit Logs */}
           <button
             onClick={() => setAdminTab('audit')}
@@ -286,6 +300,7 @@ export const AdminLayout: React.FC = () => {
         {adminTab === 'payments' && <PaymentsQueue />}
         {adminTab === 'orders' && <OrdersManager />}
         {adminTab === 'products' && <ProductsManager />}
+        {adminTab === 'customers' && <CustomersManager />}
         {adminTab === 'audit' && <AuditLogsView />}
         {adminTab === 'settings' && <SettingsManager />}
       </main>

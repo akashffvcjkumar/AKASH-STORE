@@ -10,6 +10,7 @@ import productsRouter from './server/routes/products.js';
 import ordersRouter from './server/routes/orders.js';
 import paymentsRouter from './server/routes/payments.js';
 import settingsRouter from './server/routes/settings.js';
+import customersRouter from './server/routes/customers.js';
 import aiRouter from './server/routes/ai.js';
 
 import { requireStaffAuth } from './server/auth.js';
@@ -44,6 +45,7 @@ async function startServer() {
   app.use('/api/admin/staff', staffRouter);
   app.use('/api/admin/audit-logs', auditRouter);
   app.use('/api/admin/payments', paymentsRouter);
+  app.use('/api/admin/customers', customersRouter);
 
   // Public/Customer Store Routes
   app.use('/api/products', productsRouter);

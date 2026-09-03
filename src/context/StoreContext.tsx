@@ -70,11 +70,13 @@ interface StoreContextType {
   refreshAuth: () => Promise<void>;
 
   // Navigation & Route Protection
-  activeView: 'customer' | 'admin' | 'admin_login' | 'forbidden_403';
-  setActiveView: (view: 'customer' | 'admin' | 'admin_login' | 'forbidden_403') => void;
+  activeView: 'customer' | 'customer_login' | 'admin' | 'admin_login' | 'forbidden_403';
+  setActiveView: (view: 'customer' | 'customer_login' | 'admin' | 'admin_login' | 'forbidden_403') => void;
   navigateToAdmin: () => void;
-  adminTab: 'staff' | 'audit' | 'orders' | 'payments' | 'products' | 'settings';
-  setAdminTab: (tab: 'staff' | 'audit' | 'orders' | 'payments' | 'products' | 'settings') => void;
+  navigateToCustomerLogin: () => void;
+  navigateToAdminLogin: () => void;
+  adminTab: 'staff' | 'audit' | 'orders' | 'payments' | 'products' | 'customers' | 'settings';
+  setAdminTab: (tab: 'staff' | 'audit' | 'orders' | 'payments' | 'products' | 'customers' | 'settings') => void;
   adminDarkMode: boolean;
   toggleAdminDarkMode: () => void;
   setAdminDarkMode: (enabled: boolean) => void;
@@ -137,9 +139,47 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('akash_staff_token'));
   const [permissions, setPermissions] = useState<PermissionDefinition | null>(null);
 
-  // Navigation
-  const [activeView, setActiveView] = useState<'customer' | 'admin' | 'admin_login' | 'forbidden_403'>('customer');
-  const [adminTab, setAdminTab] = useState<'staff' | 'audit' | 'orders' | 'payments' | 'products' | 'settings'>('staff');
+  // Navigation with URL Synchronization for Separate Portal Architecture
+  const getInitialView = (): 'customer' | 'customer_login' | 'admin' | 'admin_login' | 'forbidden_403' => {
+    if (typeof window === 'undefined') return 'customer';
+    const path = window.location.pathname.toLowerCase();
+    if (path === '/login') return 'customer_login';
+    if (path === '/admin-secure-login') return 'admin_login';
+    if (path === '/admin') return 'admin';
+    if (path === '/forbidden') return 'forbidden_403';
+    return 'customer';
+  };
+
+  const [activeView, setActiveViewState] = useState<'customer' | 'customer_login' | 'admin' | 'admin_login' | 'forbidden_403'>(getInitialView);
+  const [adminTab, setAdminTab] = useState<'staff' | 'audit' | 'orders' | 'payments' | 'products' | 'customers' | 'settings'>('staff');
+
+  const setActiveView = (view: 'customer' | 'customer_login' | 'admin' | 'admin_login' | 'forbidden_403') => {
+    setActiveViewState(view);
+    if (typeof window !== 'undefined') {
+      let targetPath = '/';
+      if (view === 'customer_login') targetPath = '/login';
+      else if (view === 'admin_login') targetPath = '/admin-secure-login';
+      else if (view === 'admin') targetPath = '/admin';
+      else if (view === 'forbidden_403') targetPath = '/forbidden';
+      
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({}, '', targetPath);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.toLowerCase();
+      if (path === '/login') setActiveViewState('customer_login');
+      else if (path === '/admin-secure-login') setActiveViewState('admin_login');
+      else if (path === '/admin') setActiveViewState('admin');
+      else if (path === '/forbidden') setActiveViewState('forbidden_403');
+      else setActiveViewState('customer');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Admin Theme (Dark Mode)
   const [adminDarkMode, setAdminDarkModeState] = useState<boolean>(() => {
@@ -363,6 +403,20 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setCurrentCustomer(null);
       showToast('Signed out of Customer Account.', 'info');
     }
+  };
+
+  // Portal Navigation Helpers
+  const navigateToCustomerLogin = () => {
+    setActiveView('customer_login');
+  };
+
+  const navigateToAdminLogin = () => {
+    if (currentCustomer && currentCustomer.role === 'CUSTOMER' && !currentStaff) {
+      setActiveView('forbidden_403');
+      showToast('403 Forbidden: Customer accounts cannot access the Staff Portal.', 'error');
+      return;
+    }
+    setActiveView('admin_login');
   };
 
   // RBAC Navigation Helper
@@ -603,6 +657,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         activeView,
         setActiveView,
         navigateToAdmin,
+        navigateToCustomerLogin,
+        navigateToAdminLogin,
         adminTab,
         setAdminTab,
         adminDarkMode,
