@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-base: '/AKASH-STORE/',
+base: '/akashstore/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
