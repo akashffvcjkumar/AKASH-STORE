@@ -283,4 +283,42 @@ router.patch('/admin/:id/stock', authenticateStaff, requirePermission('canManage
   res.json(product);
 });
 
+/**
+ * Protected: POST /api/products/upload-image or /api/admin/products/upload-image
+ * Upload product image (accepts base64 data URL or image URL)
+ * Permits Admins and Employees with canManageProducts permission to upload images.
+ */
+router.post(['/upload-image', '/admin/upload-image'], authenticateStaff, requirePermission('canManageProducts'), (req: AuthenticatedRequest, res: Response) => {
+  const { imageBase64, filename } = req.body;
+  const user = req.user!;
+  const ip = extractClientIp(req);
+
+  if (!imageBase64) {
+    return res.status(400).json({ error: 'Image payload is required.' });
+  }
+
+  if (!imageBase64.startsWith('data:image/') && !imageBase64.startsWith('http://') && !imageBase64.startsWith('https://')) {
+    return res.status(400).json({ error: 'Invalid image format. Provide a valid image data URL or web URL.' });
+  }
+
+  db.recordAuditLog({
+    employeeId: user.id,
+    employeeName: user.name,
+    employeeEmail: user.email,
+    role: user.role,
+    action: 'IMAGE_UPLOAD',
+    resource: 'ProductImage',
+    details: `${user.name} (${user.role}) uploaded product image "${filename || 'catalog-asset'}"`,
+    ip,
+    status: 'SUCCESS',
+  });
+
+  res.json({
+    imageUrl: imageBase64,
+    filename: filename || `prod_${Date.now()}.webp`,
+    uploadedBy: user.name,
+    role: user.role,
+  });
+});
+
 export default router;

@@ -43,7 +43,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
   const { setActiveView, showToast, settings, currentCustomer, logoutCustomer } = useStore();
 
   const [email, setEmail] = useState('akashchondroroy@protonmail.com');
-  const [password, setPassword] = useState('akash123456');
+  const [password, setPassword] = useState('@Akash5051');
   const [showPassword, setShowPassword] = useState(false);
   const [saveInCredentialManager, setSaveInCredentialManager] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -432,7 +432,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
               {/* Super Admin */}
               <button
                 type="button"
-                onClick={() => selectAccount('akashchondroroy@protonmail.com', 'akash123456', 'Super Admin')}
+                onClick={() => selectAccount('akashchondroroy@protonmail.com', '@Akash5051', 'Super Admin')}
                 className="p-2 rounded-lg bg-purple-950/40 hover:bg-purple-900/50 border border-purple-800/60 text-left transition-colors cursor-pointer"
               >
                 <div className="text-[10px] font-extrabold text-purple-300">SUPER_ADMIN</div>

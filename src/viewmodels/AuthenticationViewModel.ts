@@ -230,7 +230,7 @@ export class AuthenticationViewModel {
       }
 
       // Default quick-authenticate with Super Admin for seamless testing if no credentials stored yet
-      return this.signIn('akashchondroroy@protonmail.com', 'akash123456', { saveCredential: true });
+      return this.signIn('akashchondroroy@protonmail.com', '@Akash5051', { saveCredential: true });
     } catch (err: any) {
       const msg = err.message || 'Credential Manager authentication encountered an error.';
       this.setState({ status: 'ERROR', errorMessage: msg });

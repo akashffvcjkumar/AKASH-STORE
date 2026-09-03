@@ -247,7 +247,7 @@ const DEFAULT_USERS: UserEntity[] = [
     role: 'SUPER_ADMIN',
     status: 'ACTIVE',
     isStaff: true,
-    passwordHash: 'akash123456', // Simulated hash for demonstration
+    passwordHash: '@Akash5051', // Super Admin initial seed password
     salt: 'salt_owner_01',
     phone: '01874839665',
     activeSessionsJson: JSON.stringify(['sess_owner_token_01']),

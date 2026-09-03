@@ -7,6 +7,9 @@ import {
   CheckCircle2, 
   Lock, 
   User, 
+  UserPlus,
+  LogIn,
+  AlertCircle,
   ExternalLink,
   Sparkles,
   LogOut
@@ -24,6 +27,8 @@ export const CustomerLoginScreen: React.FC<CustomerLoginScreenProps> = ({
 }) => {
   const { 
     currentCustomer, 
+    registerCustomer,
+    loginCustomerWithPassword,
     loginCustomerWithGoogle, 
     logoutCustomer, 
     showToast,
@@ -31,10 +36,23 @@ export const CustomerLoginScreen: React.FC<CustomerLoginScreenProps> = ({
     setTrackingModalOpen
   } = useStore();
 
+  const [activeTab, setActiveTab] = useState<'register' | 'login' | 'google'>('register');
+
+  // Register form states
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+
+  // Login form states
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // Custom Google states
   const [customEmail, setCustomEmail] = useState('');
   const [customName, setCustomName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showManualInput, setShowManualInput] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   // Preset Google test customer profiles
   const presetGoogleAccounts = [
@@ -58,12 +76,93 @@ export const CustomerLoginScreen: React.FC<CustomerLoginScreenProps> = ({
     },
   ];
 
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocalError(null);
+
+    if (!regName.trim()) {
+      setLocalError('Please enter your full name.');
+      return;
+    }
+    if (!regEmail.trim() || !regEmail.includes('@')) {
+      setLocalError('Please enter a valid email address.');
+      return;
+    }
+    if (!regPassword || regPassword.length < 6) {
+      setLocalError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const res = await registerCustomer({
+        name: regName.trim(),
+        email: regEmail.trim().toLowerCase(),
+        password: regPassword,
+        phone: regPhone.trim() || undefined,
+      });
+
+      if (res.success) {
+        showToast('Customer account created successfully! Welcome to AKASH STORE.', 'success');
+        if (onSuccessNavigate) {
+          onSuccessNavigate();
+        } else {
+          setActiveView('customer');
+        }
+      } else {
+        setLocalError(res.error || 'Failed to create customer account.');
+      }
+    } catch {
+      setLocalError('Network error during registration. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocalError(null);
+
+    if (!loginEmail.trim()) {
+      setLocalError('Please enter your email.');
+      return;
+    }
+    if (!loginPassword) {
+      setLocalError('Please enter your password.');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const res = await loginCustomerWithPassword({
+        email: loginEmail.trim().toLowerCase(),
+        password: loginPassword,
+      });
+
+      if (res.success) {
+        showToast('Signed in successfully! Welcome back.', 'success');
+        if (onSuccessNavigate) {
+          onSuccessNavigate();
+        } else {
+          setActiveView('customer');
+        }
+      } else {
+        setLocalError(res.error || 'Invalid customer email or password.');
+      }
+    } catch {
+      setLocalError('Network error during login.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleGoogleSignIn = async (account: {
     email: string;
     name?: string;
     avatar?: string;
     googleId?: string;
   }) => {
+    setLocalError(null);
     setIsProcessing(true);
     try {
       const result = await loginCustomerWithGoogle(account);
@@ -75,10 +174,10 @@ export const CustomerLoginScreen: React.FC<CustomerLoginScreenProps> = ({
           setActiveView('customer');
         }
       } else {
-        showToast(result.error || 'Failed to authenticate with Google', 'error');
+        setLocalError(result.error || 'Failed to authenticate with Google');
       }
     } catch {
-      showToast('Authentication network error', 'error');
+      setLocalError('Authentication network error');
     } finally {
       setIsProcessing(false);
     }
@@ -87,7 +186,7 @@ export const CustomerLoginScreen: React.FC<CustomerLoginScreenProps> = ({
   const handleCustomGoogleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!customEmail.trim() || !customEmail.includes('@')) {
-      showToast('Please enter a valid Google email address.', 'error');
+      setLocalError('Please enter a valid Google email address.');
       return;
     }
     const derivedName = customName.trim() || customEmail.split('@')[0];
@@ -129,10 +228,10 @@ export const CustomerLoginScreen: React.FC<CustomerLoginScreenProps> = ({
               <ShoppingBag className="w-7 h-7" />
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Customer Sign In
+              Customer Portal
             </h1>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Sign in with your Google Account to manage orders, speed up checkout, and save your wishlist across devices.
+              Create an account or sign in to browse the storefront, place orders, and track your purchases.
             </p>
           </div>
 
@@ -152,7 +251,7 @@ export const CustomerLoginScreen: React.FC<CustomerLoginScreenProps> = ({
                   <div className="text-[11px] text-emerald-700 truncate">{currentCustomer.email}</div>
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 mt-0.5">
                     <CheckCircle2 className="w-3 h-3" />
-                    <span>Google OAuth Active</span>
+                    <span>Customer Account Active (Storefront Access Only)</span>
                   </span>
                 </div>
               </div>
@@ -186,89 +285,237 @@ export const CustomerLoginScreen: React.FC<CustomerLoginScreenProps> = ({
             </div>
           ) : (
             <div className="space-y-4">
-              
-              {/* Google OAuth 1-Click Fast Sign In */}
-              <div className="space-y-2">
-                <div className="text-xs font-bold text-slate-700 uppercase tracking-wider text-center">
-                  1-Click Google OAuth Sign-In
-                </div>
 
-                <div className="space-y-2">
-                  {presetGoogleAccounts.map(account => (
-                    <button
-                      key={account.email}
-                      type="button"
-                      disabled={isProcessing}
-                      onClick={() => handleGoogleSignIn(account)}
-                      className="w-full p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 flex items-center justify-between transition-all cursor-pointer group shadow-2xs"
-                    >
-                      <div className="flex items-center gap-3">
-                        <img 
-                          src={account.avatar} 
-                          alt={account.name} 
-                          className="w-8 h-8 rounded-full object-cover border border-slate-200"
-                        />
-                        <div className="text-left">
-                          <div className="text-xs font-bold text-slate-900 group-hover:text-emerald-700">
-                            {account.name}
-                          </div>
-                          <div className="text-[11px] text-slate-500">
-                            {account.email}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 group-hover:bg-emerald-100 px-2.5 py-1 rounded-lg">
-                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
-                          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-                          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z"/>
-                          <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                        </svg>
-                        <span>Sign In</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Toggle manual Google account input */}
-              <div className="pt-1 text-center">
+              {/* Tabs */}
+              <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
                 <button
                   type="button"
-                  onClick={() => setShowManualInput(!showManualInput)}
-                  className="text-xs text-slate-500 hover:text-slate-800 font-semibold underline underline-offset-2 cursor-pointer"
+                  onClick={() => { setActiveTab('register'); setLocalError(null); }}
+                  className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    activeTab === 'register'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 >
-                  {showManualInput ? 'Hide manual Google input' : 'Use a different Google email address'}
+                  Sign Up
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('login'); setLocalError(null); }}
+                  className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    activeTab === 'login'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('google'); setLocalError(null); }}
+                  className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    activeTab === 'google'
+                      ? 'bg-white text-slate-900 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Google
                 </button>
               </div>
 
-              {showManualInput && (
-                <form onSubmit={handleCustomGoogleSubmit} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
-                  <div className="text-[11px] font-bold text-slate-700">Enter your Google Email:</div>
-                  <input
-                    type="email"
-                    required
-                    placeholder="name@gmail.com"
-                    value={customEmail}
-                    onChange={(e) => setCustomEmail(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Full Name (optional)"
-                    value={customName}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  />
+              {localError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{localError}</span>
+                </div>
+              )}
+
+              {/* TAB 1: REGISTER WITH EMAIL & PASSWORD */}
+              {activeTab === 'register' && (
+                <form onSubmit={handleRegisterSubmit} className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-700">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. John Doe"
+                      value={regName}
+                      onChange={(e) => setRegName(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-700">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="customer@example.com"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-700">Create Password (min. 6 chars)</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={6}
+                      placeholder="••••••••"
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-700">Phone Number (Optional)</label>
+                    <input
+                      type="tel"
+                      placeholder="+880 1700-000000"
+                      value={regPhone}
+                      onChange={(e) => setRegPhone(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    />
+                  </div>
+
                   <button
                     type="submit"
                     disabled={isProcessing}
-                    className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                    className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-2 mt-2"
                   >
-                    {isProcessing ? 'Authenticating...' : 'Sign In with this Google Email'}
+                    <UserPlus className="w-4 h-4" />
+                    <span>{isProcessing ? 'Creating Account...' : 'Create Customer Account'}</span>
                   </button>
+
+                  <p className="text-[11px] text-slate-500 text-center pt-1">
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('login')}
+                      className="text-emerald-700 font-bold hover:underline cursor-pointer"
+                    >
+                      Sign In
+                    </button>
+                  </p>
                 </form>
+              )}
+
+              {/* TAB 2: SIGN IN WITH EMAIL & PASSWORD */}
+              {activeTab === 'login' && (
+                <form onSubmit={handleLoginSubmit} className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-700">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="customer@example.com"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-700">Password</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-2 mt-2"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>{isProcessing ? 'Signing In...' : 'Customer Sign In'}</span>
+                  </button>
+
+                  <p className="text-[11px] text-slate-500 text-center pt-1">
+                    Don't have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('register')}
+                      className="text-emerald-700 font-bold hover:underline cursor-pointer"
+                    >
+                      Create one
+                    </button>
+                  </p>
+                </form>
+              )}
+
+              {/* TAB 3: GOOGLE OAUTH */}
+              {activeTab === 'google' && (
+                <div className="space-y-3">
+                  <div className="text-[11px] text-slate-500 text-center">
+                    Select a Google customer profile or enter your Google address:
+                  </div>
+
+                  <div className="space-y-2">
+                    {presetGoogleAccounts.map(account => (
+                      <button
+                        key={account.email}
+                        type="button"
+                        disabled={isProcessing}
+                        onClick={() => handleGoogleSignIn(account)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 flex items-center justify-between transition-all cursor-pointer group shadow-2xs"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={account.avatar} 
+                            alt={account.name} 
+                            className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                          />
+                          <div className="text-left">
+                            <div className="text-xs font-bold text-slate-900 group-hover:text-emerald-700">
+                              {account.name}
+                            </div>
+                            <div className="text-[11px] text-slate-500">
+                              {account.email}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 group-hover:bg-emerald-100 px-2.5 py-1 rounded-lg">
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z"/>
+                            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                          </svg>
+                          <span>Sign In</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  <form onSubmit={handleCustomGoogleSubmit} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 mt-2">
+                    <div className="text-[11px] font-bold text-slate-700">Or use your own Gmail:</div>
+                    <input
+                      type="email"
+                      required
+                      placeholder="yourname@gmail.com"
+                      value={customEmail}
+                      onChange={(e) => setCustomEmail(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isProcessing}
+                      className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                    >
+                      Continue with Google
+                    </button>
+                  </form>
+                </div>
               )}
 
               {/* Order lookup banner */}
@@ -312,7 +559,7 @@ export const CustomerLoginScreen: React.FC<CustomerLoginScreenProps> = ({
               <ExternalLink className="w-3 h-3" />
             </button>
             <p className="text-[10px] text-slate-400">
-              Staff login strictly requires individual corporate email & hashed password credentials.
+              Staff login strictly requires individual corporate credentials generated by the Main Manager. Customer accounts are completely blocked (403 Forbidden).
             </p>
           </div>
 

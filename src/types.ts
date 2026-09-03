@@ -114,7 +114,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionDefinition> = {
     canManageAdmins: false,
     canManagePaymentSettings: false,
     canManageStoreSettings: false,
-    canManageProducts: false,
+    canManageProducts: true, // Permission to add products, upload images, update details
     canManageInventory: true,
     canManageOrders: true,
     canManageDelivery: true,
@@ -217,6 +217,7 @@ export interface EmployeeUser {
   authProvider?: 'LOCAL' | 'GOOGLE';
   googleId?: string;
   avatar?: string;
+  phone?: string;
   passwordHash?: string;
   salt?: string;
   mustChangePassword?: boolean;

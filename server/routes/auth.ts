@@ -85,6 +85,148 @@ router.post(['/customer/google', '/google'], (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/auth/customer/register
+ * Requirement 4: Regular customers create their own accounts using email and password.
+ * Strict RBAC: Role is ALWAYS 'CUSTOMER'.
+ */
+router.post('/customer/register', (req: Request, res: Response) => {
+  const { name, email, password, phone } = req.body;
+  const ip = extractClientIp(req);
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Please enter your full name.' });
+  }
+  if (!email || !email.trim() || !email.includes('@')) {
+    return res.status(400).json({ error: 'Please enter a valid email address.' });
+  }
+  if (!password || password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const existingUser = db.getUsers().find(u => u.email.toLowerCase() === cleanEmail);
+  if (existingUser) {
+    return res.status(409).json({ error: 'An account with this email address already exists. Please sign in instead.' });
+  }
+
+  const { hash, salt } = hashPassword(password);
+  const newCustomer = db.registerCustomer({
+    name: name.trim(),
+    email: cleanEmail,
+    passwordHash: hash,
+    salt,
+  });
+
+  if (phone) {
+    newCustomer.phone = phone.trim();
+    db.save();
+  }
+
+  // Create isolated customer session
+  const token = generateSessionToken();
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
+  const sessions = db.getSessions();
+  sessions.push({
+    token,
+    userId: newCustomer.id,
+    role: newCustomer.role, // strictly 'CUSTOMER'
+    createdAt: new Date().toISOString(),
+    expiresAt,
+    userAgent: req.headers['user-agent'],
+    ip,
+  });
+  db.setSessions(sessions);
+
+  // Audit record
+  db.recordAuditLog({
+    employeeId: newCustomer.id,
+    employeeName: newCustomer.name,
+    employeeEmail: newCustomer.email,
+    role: newCustomer.role,
+    action: 'CUSTOMER_REGISTER',
+    resource: 'CustomerAuth',
+    details: `Customer ${newCustomer.name} created an account with email and password (${newCustomer.email})`,
+    ip,
+    status: 'SUCCESS',
+  });
+
+  return res.status(201).json({
+    token,
+    user: sanitizeUser(newCustomer),
+    role: newCustomer.role,
+  });
+});
+
+/**
+ * POST /api/auth/customer/login
+ * Requirement 4: Regular customers sign into their customer account using email and password.
+ */
+router.post('/customer/login', (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  const ip = extractClientIp(req);
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const user = db.getUsers().find(u => u.email.toLowerCase() === cleanEmail);
+
+  if (!user || !user.passwordHash || !user.salt) {
+    return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+
+  if (user.status === 'DISABLED') {
+    return res.status(403).json({
+      error: 'Your customer account has been suspended. Please contact customer support.',
+      code: 'ACCOUNT_DISABLED',
+    });
+  }
+
+  const isValid = verifyPassword(password, user.passwordHash, user.salt);
+  if (!isValid) {
+    return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+
+  // Update last login
+  user.lastLoginAt = new Date().toISOString();
+  db.save();
+
+  // Create isolated customer session
+  const token = generateSessionToken();
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const sessions = db.getSessions();
+  sessions.push({
+    token,
+    userId: user.id,
+    role: user.role,
+    createdAt: new Date().toISOString(),
+    expiresAt,
+    userAgent: req.headers['user-agent'],
+    ip,
+  });
+  db.setSessions(sessions);
+
+  db.recordAuditLog({
+    employeeId: user.id,
+    employeeName: user.name,
+    employeeEmail: user.email,
+    role: user.role,
+    action: 'CUSTOMER_PASSWORD_LOGIN',
+    resource: 'CustomerAuth',
+    details: `Customer ${user.name} logged in with email and password (${user.email})`,
+    ip,
+    status: 'SUCCESS',
+  });
+
+  return res.json({
+    token,
+    user: sanitizeUser(user),
+    role: user.role,
+  });
+});
+
+/**
  * GET /api/auth/customer/me
  * Returns current authenticated customer profile
  */

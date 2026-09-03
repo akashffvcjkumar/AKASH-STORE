@@ -28,8 +28,8 @@ const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'store_db.json');
 
 function getInitialData(): DatabaseSchema {
-  // Hash default passwords safely at startup
-  const ownerAuth = hashPassword('AkashOwner@2026');
+  // Hash default passwords safely at startup - Super Admin seeded with @Akash5051
+  const ownerAuth = hashPassword('@Akash5051');
   const rahimAuth = hashPassword('RahimStaff@2026');
   const tanvirAuth = hashPassword('TanvirStaff@2026');
   const nusratAuth = hashPassword('NusratStaff@2026');
@@ -616,13 +616,29 @@ class DatabaseStore {
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
-        return {
-          ...getInitialData(),
+        const initial = getInitialData();
+        const initialOwner = initial.users.find(u => u.role === 'SUPER_ADMIN')!;
+        
+        let loadedUsers = parsed.users?.length ? parsed.users : initial.users;
+        // Guarantee Super Admin / Main Manager credentials match @Akash5051
+        const ownerIndex = loadedUsers.findIndex((u: EmployeeUser) => u.email.toLowerCase() === 'akashchondroroy@protonmail.com' || u.role === 'SUPER_ADMIN');
+        if (ownerIndex !== -1) {
+          loadedUsers[ownerIndex].passwordHash = initialOwner.passwordHash;
+          loadedUsers[ownerIndex].salt = initialOwner.salt;
+          loadedUsers[ownerIndex].status = 'ACTIVE';
+          loadedUsers[ownerIndex].role = 'SUPER_ADMIN';
+        } else {
+          loadedUsers.unshift(initialOwner);
+        }
+
+        const data: DatabaseSchema = {
+          ...initial,
           ...parsed,
-          // ensure initial users exist if missing
-          users: parsed.users?.length ? parsed.users : getInitialData().users,
-          settings: { ...getInitialData().settings, ...(parsed.settings || {}) },
+          users: loadedUsers,
+          settings: { ...initial.settings, ...(parsed.settings || {}) },
         };
+        this.saveDirect(data);
+        return data;
       }
     } catch (e) {
       console.error('Error loading DB file, fallback to initial data', e);

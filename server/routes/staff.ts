@@ -54,12 +54,15 @@ router.post('/', (req: AuthenticatedRequest, res: Response) => {
 
   // Prevent creating SUPER_ADMIN accounts
   if (role === 'SUPER_ADMIN') {
-    return res.status(400).json({ error: 'Cannot create additional SUPER_ADMIN accounts. Only the primary Owner can hold this role.' });
+    return res.status(400).json({ error: 'Cannot create additional SUPER_ADMIN accounts. Only the primary Main Manager holds this role.' });
   }
 
-  // Regular Admins cannot create other Admins (only Super Admin can)
-  if (admin.role === 'ADMIN' && role === 'ADMIN') {
-    return res.status(403).json({ error: 'Only Super Admins can create other Admin accounts.' });
+  // Requirement: Only the Main Manager has the authority to create IDs and passwords for other staff members
+  if (admin.role !== 'SUPER_ADMIN') {
+    return res.status(403).json({ 
+      error: 'Access Denied: Only the Main Manager (Super Admin) has the authority to create IDs and passwords for staff members (Admins and Employees).',
+      code: 'MAIN_MANAGER_ONLY'
+    });
   }
 
   const validRoles: UserRole[] = ['ADMIN', 'MANAGER', 'EMPLOYEE', 'INVENTORY_MANAGER', 'ORDER_MANAGER', 'SUPPORT_AGENT'];
@@ -185,6 +188,14 @@ router.patch('/:id/status', (req: AuthenticatedRequest, res: Response) => {
     return res.status(400).json({ error: 'Status must be ACTIVE or DISABLED.' });
   }
 
+  // Requirement: Only the Main Manager has the authority to deactivate or suspend any Admin/Staff account
+  if (admin.role !== 'SUPER_ADMIN') {
+    return res.status(403).json({ 
+      error: 'Access Denied: Only the Main Manager (Super Admin) has the authority to deactivate or suspend staff accounts.',
+      code: 'MAIN_MANAGER_ONLY'
+    });
+  }
+
   const users = db.getUsers();
   const employee = users.find(u => u.id === id);
 
@@ -234,6 +245,13 @@ router.post('/:id/reset-password', (req: AuthenticatedRequest, res: Response) =>
   const { id } = req.params;
   const admin = req.user!;
   const ip = extractClientIp(req);
+
+  if (admin.role !== 'SUPER_ADMIN') {
+    return res.status(403).json({ 
+      error: 'Access Denied: Only the Main Manager (Super Admin) can reset passwords and create new credentials for staff accounts.',
+      code: 'MAIN_MANAGER_ONLY'
+    });
+  }
 
   const users = db.getUsers();
   const employee = users.find(u => u.id === id);
@@ -333,6 +351,13 @@ router.delete('/:id', (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   const admin = req.user!;
   const ip = extractClientIp(req);
+
+  if (admin.role !== 'SUPER_ADMIN') {
+    return res.status(403).json({ 
+      error: 'Access Denied: Only the Main Manager (Super Admin) can permanently delete staff accounts.',
+      code: 'MAIN_MANAGER_ONLY'
+    });
+  }
 
   const users = db.getUsers();
   const employee = users.find(u => u.id === id);

@@ -52,11 +52,13 @@ interface StoreContextType {
   toggleWishlist: (productId: string) => void;
   isInWishlist: (productId: string) => boolean;
 
-  // Customer Auth (Google OAuth)
+  // Customer Auth (Email/Password & Google OAuth)
   currentCustomer: CustomerUser | null;
   customerToken: string | null;
   isCustomerAuthModalOpen: boolean;
   setIsCustomerAuthModalOpen: (open: boolean) => void;
+  registerCustomer: (params: { name: string; email: string; password: string; phone?: string }) => Promise<{ success: boolean; error?: string }>;
+  loginCustomerWithPassword: (params: { email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
   loginCustomerWithGoogle: (params: { email: string; name?: string; avatar?: string; googleId?: string }) => Promise<{ success: boolean; error?: string }>;
   logoutCustomer: () => Promise<void>;
 
@@ -357,6 +359,62 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  // Customer Registration with Email & Password
+  const registerCustomer = async (params: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await fetch('/api/auth/customer/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Account registration failed' };
+      }
+
+      setCustomerToken(data.token);
+      setCurrentCustomer(data.user || data.customer);
+      localStorage.setItem('akash_customer_token', data.token);
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Network error during customer registration' };
+    }
+  };
+
+  // Customer Login with Email & Password
+  const loginCustomerWithPassword = async (params: {
+    email: string;
+    password: string;
+  }): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await fetch('/api/auth/customer/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Customer login failed' };
+      }
+
+      setCustomerToken(data.token);
+      setCurrentCustomer(data.user || data.customer);
+      localStorage.setItem('akash_customer_token', data.token);
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Network error during customer login' };
+    }
+  };
+
   // Customer Google OAuth Login
   const loginCustomerWithGoogle = async (params: { 
     email: string; 
@@ -377,7 +435,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
 
       setCustomerToken(data.token);
-      setCurrentCustomer(data.customer);
+      setCurrentCustomer(data.customer || data.user);
       localStorage.setItem('akash_customer_token', data.token);
 
       return { success: true };
@@ -645,6 +703,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         customerToken,
         isCustomerAuthModalOpen,
         setIsCustomerAuthModalOpen,
+        registerCustomer,
+        loginCustomerWithPassword,
         loginCustomerWithGoogle,
         logoutCustomer,
         currentStaff,

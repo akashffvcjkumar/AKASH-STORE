@@ -7,18 +7,91 @@ export const CustomerAuthModal: React.FC = () => {
     isCustomerAuthModalOpen, 
     setIsCustomerAuthModalOpen, 
     currentCustomer, 
+    registerCustomer,
+    loginCustomerWithPassword,
     loginCustomerWithGoogle, 
     logoutCustomer,
     showToast,
     setActiveView 
   } = useStore();
 
+  const [authMode, setAuthMode] = useState<'register' | 'login' | 'google'>('register');
+
+  // Register state
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+
+  // Login state
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // Google state
   const [customEmail, setCustomEmail] = useState('');
   const [customName, setCustomName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isCustomerAuthModalOpen) return null;
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!regName.trim() || !regEmail.trim() || !regPassword) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+    if (regPassword.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const res = await registerCustomer({
+        name: regName.trim(),
+        email: regEmail.trim().toLowerCase(),
+        password: regPassword,
+      });
+      if (res.success) {
+        showToast('Customer account created! Welcome to AKASH STORE.', 'success');
+        setIsCustomerAuthModalOpen(false);
+      } else {
+        setError(res.error || 'Failed to create customer account.');
+      }
+    } catch (e: any) {
+      setError(e.message || 'Registration error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!loginEmail.trim() || !loginPassword) {
+      setError('Email and password are required.');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const res = await loginCustomerWithPassword({
+        email: loginEmail.trim().toLowerCase(),
+        password: loginPassword,
+      });
+      if (res.success) {
+        showToast('Signed in successfully!', 'success');
+        setIsCustomerAuthModalOpen(false);
+      } else {
+        setError(res.error || 'Invalid customer email or password.');
+      }
+    } catch (e: any) {
+      setError(e.message || 'Login error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   // Preset Google Accounts for 1-click customer login demonstration
   const quickGoogleAccounts = [
@@ -191,6 +264,37 @@ export const CustomerAuthModal: React.FC = () => {
             </div>
           ) : (
             <>
+              {/* Tabs */}
+              <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('register'); setError(null); }}
+                  className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    authMode === 'register' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Sign Up
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('login'); setError(null); }}
+                  className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    authMode === 'login' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('google'); setError(null); }}
+                  className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    authMode === 'google' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Google
+                </button>
+              </div>
+
               {error && (
                 <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -198,71 +302,156 @@ export const CustomerAuthModal: React.FC = () => {
                 </div>
               )}
 
-              {/* 1-Click Preset Google Accounts */}
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">
-                  Sign in with Google Account
-                </p>
-                <div className="space-y-2">
-                  {quickGoogleAccounts.map((acc, idx) => (
-                    <button
-                      key={idx}
-                      disabled={isProcessing}
-                      onClick={() => handleQuickGoogleSignIn(acc)}
-                      className="w-full flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all text-left hover:border-emerald-500 group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <img 
-                          src={acc.avatar} 
-                          alt={acc.name} 
-                          className="w-8 h-8 rounded-full object-cover border border-slate-300"
-                          referrerPolicy="no-referrer"
-                        />
-                        <div>
-                          <div className="text-xs font-semibold text-slate-800 group-hover:text-emerald-700">
-                            {acc.name}
-                          </div>
-                          <div className="text-[11px] text-slate-500">{acc.email}</div>
-                        </div>
-                      </div>
-                      <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-emerald-600 group-hover:border-emerald-500">
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Custom Google Email Input */}
-              <div className="pt-2 border-t border-slate-100">
-                <form onSubmit={handleCustomGoogleSignIn} className="space-y-2.5">
-                  <label className="block text-xs font-medium text-slate-700">
-                    Or Enter Any Gmail Address
-                  </label>
-                  <div className="flex gap-2">
+              {/* REGISTER TAB */}
+              {authMode === 'register' && (
+                <form onSubmit={handleRegister} className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. John Doe"
+                      value={regName}
+                      onChange={(e) => setRegName(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Email Address</label>
                     <input
                       type="email"
-                      placeholder="yourname@gmail.com"
-                      value={customEmail}
-                      onChange={(e) => setCustomEmail(e.target.value)}
-                      className="flex-1 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      required
+                      placeholder="customer@example.com"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
-                    <button
-                      type="submit"
-                      disabled={isProcessing || !customEmail}
-                      className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors whitespace-nowrap"
-                    >
-                      {isProcessing ? 'Connecting...' : 'Sign In'}
-                    </button>
                   </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Password (min. 6 chars)</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={6}
+                      placeholder="••••••••"
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                  >
+                    {isProcessing ? 'Creating Account...' : 'Create Customer Account'}
+                  </button>
                 </form>
-              </div>
+              )}
+
+              {/* LOGIN TAB */}
+              {authMode === 'login' && (
+                <form onSubmit={handlePasswordLogin} className="space-y-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="customer@example.com"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Password</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                  >
+                    {isProcessing ? 'Signing In...' : 'Sign In as Customer'}
+                  </button>
+                </form>
+              )}
+
+              {/* GOOGLE TAB */}
+              {authMode === 'google' && (
+                <>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">
+                      1-Click Google OAuth Profiles
+                    </p>
+                    <div className="space-y-2">
+                      {quickGoogleAccounts.map((acc, idx) => (
+                        <button
+                          key={idx}
+                          disabled={isProcessing}
+                          onClick={() => handleQuickGoogleSignIn(acc)}
+                          className="w-full flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all text-left hover:border-emerald-500 group cursor-pointer"
+                        >
+                          <div className="flex items-center gap-3">
+                            <img 
+                              src={acc.avatar} 
+                              alt={acc.name} 
+                              className="w-8 h-8 rounded-full object-cover border border-slate-300"
+                              referrerPolicy="no-referrer"
+                            />
+                            <div>
+                              <div className="text-xs font-semibold text-slate-800 group-hover:text-emerald-700">
+                                {acc.name}
+                              </div>
+                              <div className="text-[11px] text-slate-500">{acc.email}</div>
+                            </div>
+                          </div>
+                          <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-emerald-600 group-hover:border-emerald-500">
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100">
+                    <form onSubmit={handleCustomGoogleSignIn} className="space-y-2.5">
+                      <label className="block text-xs font-medium text-slate-700">
+                        Or Enter Any Gmail Address
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          placeholder="yourname@gmail.com"
+                          value={customEmail}
+                          onChange={(e) => setCustomEmail(e.target.value)}
+                          className="flex-1 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                        <button
+                          type="submit"
+                          disabled={isProcessing || !customEmail}
+                          className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+                        >
+                          {isProcessing ? 'Connecting...' : 'Sign In'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </>
+              )}
 
               {/* Notice */}
               <div className="text-[11px] text-slate-500 text-center leading-relaxed">
-                By signing in with Google, you can track orders, save wishlists, and checkout quickly.
+                Customer accounts are strictly restricted to browsing products and placing orders.
                 <br />
-                <span className="text-slate-400">Admin or staff members must use the separate Staff Manual Portal.</span>
+                <span className="text-slate-400">All Admin Panel routes are blocked (403 Forbidden).</span>
               </div>
             </>
           )}
