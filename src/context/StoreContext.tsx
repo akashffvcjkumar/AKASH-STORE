@@ -12,6 +12,7 @@ import {
   isStaffRole,
   StoreSettings 
 } from '../types.js';
+import { DEFAULT_STORE_SETTINGS, INITIAL_PRODUCTS } from '../initialData.js';
 
 interface Toast {
   id: string;
@@ -99,9 +100,9 @@ interface StoreContextType {
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<StoreSettings | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [settings, setSettings] = useState<StoreSettings | null>(DEFAULT_STORE_SETTINGS);
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
   // Cart
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -222,9 +223,12 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (res.ok) {
         const data = await res.json();
         setSettings(data);
+      } else {
+        setSettings(prev => prev || DEFAULT_STORE_SETTINGS);
       }
     } catch (err) {
-      console.error('Failed to load settings', err);
+      console.warn('API unavailable, keeping default settings (e.g. GitHub Pages static hosting)', err);
+      setSettings(prev => prev || DEFAULT_STORE_SETTINGS);
     }
   };
 
@@ -235,10 +239,15 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const res = await fetch('/api/products');
       if (res.ok) {
         const data = await res.json();
-        setProducts(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+        }
+      } else {
+        setProducts(prev => (prev && prev.length > 0 ? prev : INITIAL_PRODUCTS));
       }
     } catch (err) {
-      console.error('Failed to load products', err);
+      console.warn('API unavailable, keeping default products (e.g. GitHub Pages static hosting)', err);
+      setProducts(prev => (prev && prev.length > 0 ? prev : INITIAL_PRODUCTS));
     } finally {
       setIsLoadingProducts(false);
     }

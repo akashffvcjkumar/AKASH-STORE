@@ -21,7 +21,7 @@ export interface CustomerSummary {
  * Protected: GET /api/admin/customers
  * Returns all registered customers and customers from order history
  */
-router.get('/', authenticateStaff, requirePermission('canViewStaff'), (req: AuthenticatedRequest, res: Response) => {
+router.get('/', authenticateStaff, requirePermission('canManageCustomers'), (req: AuthenticatedRequest, res: Response) => {
   const users = db.getUsers();
   const orders = db.getOrders();
 
@@ -81,7 +81,7 @@ router.get('/', authenticateStaff, requirePermission('canViewStaff'), (req: Auth
  * Protected: GET /api/admin/customers/:idOrEmail
  * Returns customer profile and full purchase history
  */
-router.get('/:idOrEmail', authenticateStaff, requirePermission('canViewStaff'), (req: AuthenticatedRequest, res: Response) => {
+router.get('/:idOrEmail', authenticateStaff, requirePermission('canManageCustomers'), (req: AuthenticatedRequest, res: Response) => {
   const { idOrEmail } = req.params;
   const q = decodeURIComponent(idOrEmail).toLowerCase();
 
