@@ -15,6 +15,7 @@ import { CustomerLoginScreen } from './components/CustomerLoginScreen.js';
 import { Forbidden403Screen } from './components/admin/Forbidden403Screen.js';
 import { AdminRouteGuard } from './components/admin/AdminRouteGuard.js';
 import { CustomerAuthModal } from './components/CustomerAuthModal.js';
+import { NewsletterSection } from './components/NewsletterSection.js';
 import { 
   ShieldCheck, 
   Truck, 
@@ -292,6 +293,10 @@ const Storefront: React.FC = () => {
       {/* Footer */}
       <footer className="bg-slate-950 text-slate-400 text-xs border-t border-slate-800 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+          
+          {/* Newsletter Subscription Section */}
+          <NewsletterSection />
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             
             {/* Brand & Address */}

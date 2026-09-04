@@ -1,18 +1,21 @@
 /**
- * AKASH STORE - Admin Login Screen
+ * AKASH STORE - Admin & Staff Secure Login Screen
  * 
- * Features:
- * - Web Credential Manager API integration (navigator.credentials)
- * - Secure Logic Layer validating Role Claims against the Room User Database before navigating to /admin
- * - Role distinction between Customer and Staff roles
- * - Individual staff credentials (strictly no shared admin logins)
- * - Visual diagnostics and test accounts for negative & positive role claim validation
+ * Architecture:
+ * 1. Store Owner / Main Manager Login:
+ *    The Store Owner logs in with their credentials. From inside the Admin Panel (Staff Management),
+ *    the Owner creates unique IDs, roles, and passwords for Admins, Order Managers, Inventory Managers, and Staff.
+ * 2. Staff / Employee Login:
+ *    Employees log in with the credentials created and assigned to them by the Store Owner.
+ * 
+ * - Strictly NO hardcoded credentials in input fields (fields are clean and empty).
+ * - Strictly NO dummy test user buttons or preset quick-fill cards.
+ * - Secure Room Database verification with role-based access control (RBAC).
  */
 
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, 
-  Key, 
   Lock, 
   User, 
   AlertCircle, 
@@ -24,11 +27,12 @@ import {
   Eye,
   EyeOff,
   Database,
-  Cpu
+  Crown,
+  Briefcase
 } from 'lucide-react';
 import { useAuthentication } from '../../viewmodels/useAuthentication.js';
 import { useStore } from '../../context/StoreContext.js';
-import { StaffRole, UserRole } from '../../database/entities.js';
+import { UserRole } from '../../database/entities.js';
 
 interface AdminLoginScreenProps {
   onSuccessNavigate?: () => void;
@@ -42,10 +46,14 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
   const { state: authState, signIn, signInWithCredentialManager, validateRoleClaimForAdminRoute } = useAuthentication();
   const { setActiveView, showToast, settings, currentCustomer, logoutCustomer } = useStore();
 
-  const [email, setEmail] = useState('akashchondroroy@protonmail.com');
-  const [password, setPassword] = useState('@Akash5051');
+  // Login Mode: Store Owner/Manager vs. Staff/Employee
+  const [loginMode, setLoginMode] = useState<'MANAGER' | 'STAFF'>('MANAGER');
+
+  // Input fields start completely empty - NO pre-filled credentials
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [saveInCredentialManager, setSaveInCredentialManager] = useState(true);
+  const [saveInCredentialManager, setSaveInCredentialManager] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [roleClaimDiagnostic, setRoleClaimDiagnostic] = useState<{
     tested: boolean;
@@ -55,7 +63,16 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
   } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Clear errors when inputs change
+  // Reset inputs when switching login modes
+  const handleSwitchMode = (mode: 'MANAGER' | 'STAFF') => {
+    setLoginMode(mode);
+    setEmail('');
+    setPassword('');
+    setLocalError(null);
+    setRoleClaimDiagnostic(null);
+  };
+
+  // Clear errors when typing
   useEffect(() => {
     setLocalError(null);
   }, [email, password]);
@@ -66,8 +83,11 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
     setLocalError(null);
     setRoleClaimDiagnostic(null);
 
-    if (!email.trim()) {
-      setLocalError('Please enter your individual staff email address.');
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setLocalError(loginMode === 'MANAGER' 
+        ? 'Please enter the Store Owner / Manager email or ID.' 
+        : 'Please enter your staff email or ID assigned by your manager.');
       return;
     }
 
@@ -80,12 +100,12 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
 
     try {
       // Step 1: Authenticate via AuthenticationViewModel + UserRepository
-      const authResult = await signIn(email.trim(), password, {
+      const authResult = await signIn(trimmedEmail, password, {
         saveCredential: saveInCredentialManager,
       });
 
       if (!authResult.success || !authResult.user) {
-        setLocalError(authResult.error || 'Authentication failed. Please verify your credentials.');
+        setLocalError(authResult.error || 'Authentication failed. Please check your email and password.');
         setIsProcessing(false);
         return;
       }
@@ -100,20 +120,30 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
           role: claimCheck.role,
           reason: claimCheck.reason,
         });
-        setLocalError(claimCheck.reason || 'Access Denied: Role claim not authorized for /admin route.');
+        setLocalError(claimCheck.reason || 'Access Denied: You do not have permissions to access the management portal.');
         setIsProcessing(false);
         return;
       }
 
-      // Step 3: Success! Role claim verified in Room DB. Navigate to /admin
-      setRoleClaimDiagnostic({
-        tested: true,
-        valid: true,
-        role: claimCheck.role,
-        reason: `Role claim validated against Room Database: '${claimCheck.role}' authorized for /admin route.`,
-      });
+      // Verify role alignment with selected portal mode
+      if (loginMode === 'MANAGER' && claimCheck.role !== 'SUPER_ADMIN') {
+        // If a non-owner staff attempts to log in via Owner tab, inform them politely
+        setRoleClaimDiagnostic({
+          tested: true,
+          valid: true,
+          role: claimCheck.role,
+          reason: `Authenticated as staff member (${claimCheck.role}). Redirecting to Staff Dashboard.`,
+        });
+      } else {
+        setRoleClaimDiagnostic({
+          tested: true,
+          valid: true,
+          role: claimCheck.role,
+          reason: `Role validated against Room Database: '${claimCheck.role}' authorized.`,
+        });
+      }
 
-      showToast(`Authenticated as ${authResult.user.name} (${claimCheck.role}). Access granted to /admin.`, 'success');
+      showToast(`Welcome back, ${authResult.user.name} (${claimCheck.role})!`, 'success');
 
       setTimeout(() => {
         setIsProcessing(false);
@@ -130,7 +160,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
     }
   };
 
-  // Handle Credential Manager One-Click Sign In
+  // Handle Credential Manager One-Click Sign In (if saved by user)
   const handleCredentialManagerSignIn = async () => {
     setLocalError(null);
     setRoleClaimDiagnostic(null);
@@ -140,7 +170,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
       const result = await signInWithCredentialManager();
 
       if (!result.success || !result.user) {
-        setLocalError(result.error || 'Credential Manager was unable to authenticate this session.');
+        setLocalError(result.error || 'No saved credentials found in Credential Manager.');
         setIsProcessing(false);
         return;
       }
@@ -154,12 +184,12 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
           role: claimCheck.role,
           reason: claimCheck.reason,
         });
-        setLocalError(claimCheck.reason || 'Access Denied: Credential role claim rejected.');
+        setLocalError(claimCheck.reason || 'Access Denied: Credential role rejected.');
         setIsProcessing(false);
         return;
       }
 
-      showToast(`Credential Manager verified identity for ${result.user.name} (${result.user.role}).`, 'success');
+      showToast(`Identity verified for ${result.user.name} (${result.user.role}).`, 'success');
 
       setTimeout(() => {
         setIsProcessing(false);
@@ -174,15 +204,6 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
       setLocalError(err.message || 'Credential Manager error.');
       setIsProcessing(false);
     }
-  };
-
-  // Quick Select Accounts for Evaluation & Testing
-  const selectAccount = (accountEmail: string, accountPass: string, roleName: string) => {
-    setEmail(accountEmail);
-    setPassword(accountPass);
-    setLocalError(null);
-    setRoleClaimDiagnostic(null);
-    showToast(`Loaded account for ${roleName}. Click "Authenticate" to verify.`, 'info');
   };
 
   return (
@@ -223,7 +244,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
             {settings?.storeName || 'AKASH STORE'}
           </h2>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Admin & Staff Authentication System with Role-Based Access Control (RBAC)
+            Management & Staff Authentication System with Role-Based Access Control
           </p>
         </div>
       </div>
@@ -240,7 +261,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
                 <span>Customer Google Account Detected ({currentCustomer.name})</span>
               </div>
               <p className="text-[11px] text-rose-200/80 leading-relaxed">
-                This route (<code className="font-mono text-rose-300">/admin-secure-login</code>) is strictly restricted to Super Admins, Admins, and Employees. Customer Google OAuth accounts are completely barred from accessing admin privileges.
+                This portal is strictly reserved for store managers and authorized employees. Customer accounts cannot access administration privileges.
               </p>
               <div className="flex items-center gap-2 pt-1">
                 <button
@@ -261,49 +282,67 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
             </div>
           )}
 
-          {/* Credential Manager Banner & Quick Action */}
-          <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Fingerprint className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs font-bold text-slate-200">Credential Manager</span>
-              </div>
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
-                {authState.isCredentialManagerSupported ? 'Web API Ready' : 'Vault Ready'}
-              </span>
-            </div>
-            
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              {authState.isCredentialManagerSupported 
-                ? 'Authenticate seamlessly using device passkey, stored PasswordCredential, or platform authenticator.'
-                : '1-Click instant sign-in with verified Super Admin credentials in sandboxed preview mode.'}
-            </p>
+          {/* TWO SEPARATE PORTAL MODES: MANAGER vs. STAFF */}
+          <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-950 rounded-xl border border-slate-800">
+            <button
+              type="button"
+              onClick={() => handleSwitchMode('MANAGER')}
+              className={`py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                loginMode === 'MANAGER'
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Crown className="w-4 h-4 text-amber-300" />
+              <span>Owner / Manager</span>
+            </button>
 
             <button
               type="button"
-              onClick={handleCredentialManagerSignIn}
-              disabled={isProcessing}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+              onClick={() => handleSwitchMode('STAFF')}
+              className={`py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                loginMode === 'STAFF'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
             >
-              <Fingerprint className="w-4 h-4" />
-              <span>{authState.isCredentialManagerSupported ? 'Sign In with Credential Manager' : '1-Click Super Admin Sign In'}</span>
+              <Briefcase className="w-4 h-4 text-cyan-200" />
+              <span>Staff / Employee</span>
             </button>
           </div>
 
-          <div className="relative flex items-center justify-center">
-            <div className="border-t border-slate-800 w-full" />
-            <span className="bg-slate-900 px-3 text-[11px] text-slate-500 font-medium uppercase tracking-wider">
-              Or individual staff credentials
-            </span>
+          {/* Portal Information Banner */}
+          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 space-y-1">
+            {loginMode === 'MANAGER' ? (
+              <>
+                <div className="flex items-center gap-2 font-bold text-emerald-400">
+                  <Crown className="w-4 h-4 text-amber-300" />
+                  <span>Store Owner / Primary Manager Portal</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Log in with your Store Owner credentials. Once logged in, you can manage orders, products, and <strong>create/assign IDs and passwords for all Admins and Staff</strong> from the Staff Management section.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 font-bold text-cyan-400">
+                  <Briefcase className="w-4 h-4 text-cyan-300" />
+                  <span>Assigned Staff & Employee Portal</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Log in using the individual account credentials created and assigned to you by the Store Owner / Manager.
+                </p>
+              </>
+            )}
           </div>
 
-          {/* Form */}
+          {/* Login Form */}
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             
-            {/* Email field */}
+            {/* Email / ID field */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Staff Email Address
+                {loginMode === 'MANAGER' ? 'Manager Email / ID' : 'Staff Email / ID'}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
@@ -314,8 +353,9 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="employee@akashstore.com"
-                  className="block w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono shadow-inner"
+                  placeholder={loginMode === 'MANAGER' ? 'manager@akashstore.com' : 'employee@akashstore.com'}
+                  autoComplete="username"
+                  className="block w-full pl-9 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono shadow-inner transition-all"
                 />
               </div>
             </div>
@@ -326,7 +366,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
                 <label className="block text-xs font-semibold text-slate-300">
                   Password
                 </label>
-                <span className="text-[10px] text-slate-500">Individual identity protected</span>
+                <span className="text-[10px] text-slate-500">Encrypted Room DB Verification</span>
               </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
@@ -337,8 +377,9 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="block w-full pl-9 pr-10 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono shadow-inner"
+                  placeholder="Enter your account password"
+                  autoComplete="current-password"
+                  className="block w-full pl-9 pr-10 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono shadow-inner transition-all"
                 />
                 <button
                   type="button"
@@ -359,8 +400,20 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
                   onChange={(e) => setSaveInCredentialManager(e.target.checked)}
                   className="rounded border-slate-800 bg-slate-950 text-emerald-600 focus:ring-emerald-500 h-4 w-4"
                 />
-                <span>Save credentials to Credential Manager</span>
+                <span>Save session to device Credential Manager</span>
               </label>
+
+              {authState.isCredentialManagerSupported && (
+                <button
+                  type="button"
+                  onClick={handleCredentialManagerSignIn}
+                  disabled={isProcessing}
+                  className="text-[11px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <Fingerprint className="w-3.5 h-3.5" />
+                  <span>Passkey Login</span>
+                </button>
+              )}
             </div>
 
             {/* Error Message */}
@@ -368,7 +421,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
               <div className="p-3 bg-rose-950/80 border border-rose-800/80 rounded-xl text-rose-300 text-xs flex items-start gap-2.5 animate-in fade-in">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
                 <div className="space-y-1">
-                  <p className="font-bold">Authentication Rejected</p>
+                  <p className="font-bold">Authentication Failed</p>
                   <p className="text-[11px] text-rose-300 leading-relaxed">{localError}</p>
                 </div>
               </div>
@@ -388,7 +441,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
                 )}
                 <div className="space-y-0.5">
                   <span className="font-bold block">
-                    {roleClaimDiagnostic.valid ? 'Role Claim Verified' : 'Role Claim Verification Notice'}
+                    {roleClaimDiagnostic.valid ? 'Role Claim Verified' : 'Role Claim Notice'}
                   </span>
                   <p className="text-[11px] leading-relaxed">{roleClaimDiagnostic.reason}</p>
                 </div>
@@ -399,108 +452,34 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
             <button
               type="submit"
               disabled={isProcessing}
-              className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer disabled:opacity-50"
+              className={`w-full py-3 px-4 rounded-xl text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer disabled:opacity-50 ${
+                loginMode === 'MANAGER'
+                  ? 'bg-emerald-600 hover:bg-emerald-500'
+                  : 'bg-cyan-600 hover:bg-cyan-500'
+              }`}
             >
               {isProcessing ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Validating Role Claim against Room DB...</span>
+                  <span>Verifying Credentials...</span>
                 </>
               ) : (
                 <>
-                  <span>Authenticate & Enter /admin Route</span>
+                  <span>
+                    {loginMode === 'MANAGER' ? 'Sign In as Store Owner / Manager' : 'Sign In as Staff Member'}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Test Accounts & Role Claim Evaluation Suite */}
-          <div className="pt-2 border-t border-slate-800/80 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Test Role Claim Validation</span>
-              </span>
-              <span className="text-[10px] text-slate-500 font-mono">Room DAO Verified</span>
-            </div>
-
-            <p className="text-[10px] text-slate-400 leading-tight">
-              Click an individual account below to verify role-based access control and security claim enforcement:
-            </p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
-              
-              {/* Super Admin */}
-              <button
-                type="button"
-                onClick={() => selectAccount('akashchondroroy@protonmail.com', '@Akash5051', 'Super Admin')}
-                className="p-2 rounded-lg bg-purple-950/40 hover:bg-purple-900/50 border border-purple-800/60 text-left transition-colors cursor-pointer"
-              >
-                <div className="text-[10px] font-extrabold text-purple-300">SUPER_ADMIN</div>
-                <div className="text-[10px] text-slate-300 truncate">Akash (Owner)</div>
-              </button>
-
-              {/* Order Manager */}
-              <button
-                type="button"
-                onClick={() => selectAccount('rahim@akashstore.com', 'rahim123456', 'Order Manager')}
-                className="p-2 rounded-lg bg-amber-950/40 hover:bg-amber-900/50 border border-amber-800/60 text-left transition-colors cursor-pointer"
-              >
-                <div className="text-[10px] font-extrabold text-amber-300">ORDER_MANAGER</div>
-                <div className="text-[10px] text-slate-300 truncate">Rahim Ahmed</div>
-              </button>
-
-              {/* Inventory Manager */}
-              <button
-                type="button"
-                onClick={() => selectAccount('selim@akashstore.com', 'inventory123', 'Inventory Manager')}
-                className="p-2 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-800/60 text-left transition-colors cursor-pointer"
-              >
-                <div className="text-[10px] font-extrabold text-emerald-300">INVENTORY_MGR</div>
-                <div className="text-[10px] text-slate-300 truncate">Selim Reza</div>
-              </button>
-
-              {/* Admin */}
-              <button
-                type="button"
-                onClick={() => selectAccount('tariqul@akashstore.com', 'admin123456', 'Admin')}
-                className="p-2 rounded-lg bg-blue-950/40 hover:bg-blue-900/50 border border-blue-800/60 text-left transition-colors cursor-pointer"
-              >
-                <div className="text-[10px] font-extrabold text-blue-300">ADMIN</div>
-                <div className="text-[10px] text-slate-300 truncate">Tariqul Islam</div>
-              </button>
-
-              {/* Support Agent */}
-              <button
-                type="button"
-                onClick={() => selectAccount('nusrat@akashstore.com', 'nusrat123', 'Support Agent')}
-                className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-left transition-colors cursor-pointer"
-              >
-                <div className="text-[10px] font-extrabold text-slate-300">SUPPORT_AGENT</div>
-                <div className="text-[10px] text-slate-300 truncate">Nusrat Jahan</div>
-              </button>
-
-              {/* Customer Account - Tests Negative Role Claim Validation */}
-              <button
-                type="button"
-                onClick={() => selectAccount('tanvir.customer@gmail.com', 'custpass123', 'Customer (Negative Test)')}
-                className="p-2 rounded-lg bg-rose-950/50 hover:bg-rose-900/60 border border-rose-800 text-left transition-colors cursor-pointer"
-                title="Tests rejection of CUSTOMER role attempting to navigate to /admin"
-              >
-                <div className="text-[10px] font-extrabold text-rose-300">CUSTOMER (TEST)</div>
-                <div className="text-[10px] text-rose-200 truncate">Reject /admin</div>
-              </button>
-
-            </div>
-          </div>
-
         </div>
 
         {/* Security Compliance Footer Note */}
         <div className="mt-6 text-center text-[11px] text-slate-500 space-y-1">
-          <p>Strict RBAC Policy Enforced • Shared admin accounts are strictly prohibited</p>
-          <p>All authentication events and role checks are logged to the Room Audit Trail</p>
+          <p>Strict RBAC Policy Enforced • Individual Credentials Only</p>
+          <p>Store Owner creates and assigns all employee accounts in Staff Management</p>
         </div>
       </div>
 

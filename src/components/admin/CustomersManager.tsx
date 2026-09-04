@@ -16,7 +16,10 @@ import {
   CheckCircle2,
   X,
   ExternalLink,
-  MessageSquare
+  MessageSquare,
+  Download,
+  Send,
+  Sparkles
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext.js';
 import { OrderRecord } from '../../types.js';
@@ -35,12 +38,34 @@ interface CustomerSummary {
 }
 
 export const CustomersManager: React.FC = () => {
-  const { token, showToast, currentStaff, setAdminTab } = useStore();
+  const { token, showToast, currentStaff, setAdminTab, newsletterSubscribers } = useStore();
 
+  const [activeViewTab, setActiveViewTab] = useState<'CUSTOMERS' | 'NEWSLETTER'>('CUSTOMERS');
   const [customers, setCustomers] = useState<CustomerSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [authFilter, setAuthFilter] = useState<'ALL' | 'GOOGLE' | 'LOCAL'>('ALL');
+  const [newsletterSearch, setNewsletterSearch] = useState('');
+
+  const exportSubscribersCsv = () => {
+    if (!newsletterSubscribers || newsletterSubscribers.length === 0) {
+      showToast('No newsletter subscribers to export yet.', 'info');
+      return;
+    }
+    const headers = 'ID,Email,SubscribedAt,Status,Source\n';
+    const rows = newsletterSubscribers
+      .map(s => `"${s.id}","${s.email}","${s.subscribedAt}","${s.status}","${s.source}"`)
+      .join('\n');
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `akash_newsletter_subscribers_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Subscribers CSV exported successfully!', 'success');
+  };
 
   // Selected customer details & full purchase history
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerSummary | null>(null);
@@ -161,8 +186,188 @@ export const CustomersManager: React.FC = () => {
         </button>
       </div>
 
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* View Switcher: Registered Accounts vs. Newsletter Subscribers */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveViewTab('CUSTOMERS')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeViewTab === 'CUSTOMERS'
+                ? 'bg-slate-900 dark:bg-cyan-600 text-white shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <UserCheck className="w-4 h-4" />
+            <span>Registered Customers ({customers.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveViewTab('NEWSLETTER')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeViewTab === 'NEWSLETTER'
+                ? 'bg-emerald-600 text-white shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            <Mail className="w-4 h-4" />
+            <span>Newsletter Subscribers ({newsletterSubscribers.length})</span>
+          </button>
+        </div>
+
+        {activeViewTab === 'NEWSLETTER' && (
+          <button
+            onClick={exportSubscribersCsv}
+            className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export Subscribers CSV</span>
+          </button>
+        )}
+      </div>
+
+      {activeViewTab === 'NEWSLETTER' ? (
+        /* NEWSLETTER SUBSCRIBERS DASHBOARD */
+        <div className="space-y-6">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Total Subscribed Emails
+              </div>
+              <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                {newsletterSubscribers.length}
+              </div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-500" />
+                <span>Collected for marketing updates</span>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Active Subscribers
+              </div>
+              <div className="text-xl font-bold text-cyan-600 dark:text-cyan-400 mt-1">
+                {newsletterSubscribers.filter(s => s.status === 'ACTIVE').length}
+              </div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                100% verified opt-in via Storefront
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+              <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Primary Acquisition Channel
+              </div>
+              <div className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1">
+                Storefront Footer Banner
+              </div>
+              <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" />
+                <span>Room Database & Backend Synced</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Search bar */}
+          <div className="flex justify-between items-center gap-3">
+            <div className="relative max-w-sm w-full">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search subscriber emails..."
+                value={newsletterSearch}
+                onChange={(e) => setNewsletterSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-2xs"
+              />
+            </div>
+
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              Showing {newsletterSubscribers.filter(s => !newsletterSearch.trim() || s.email.toLowerCase().includes(newsletterSearch.toLowerCase().trim())).length} emails
+            </span>
+          </div>
+
+          {/* Subscribers Table */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Subscriber Email</th>
+                    <th className="py-3 px-4">Subscription Date</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4">Source Channel</th>
+                    <th className="py-3 px-4 text-right">Marketing Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {newsletterSubscribers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-10 text-center text-slate-400">
+                        No newsletter subscribers collected yet. Customers will appear here as they subscribe from the storefront footer.
+                      </td>
+                    </tr>
+                  ) : (
+                    newsletterSubscribers
+                      .filter(s => !newsletterSearch.trim() || s.email.toLowerCase().includes(newsletterSearch.toLowerCase().trim()))
+                      .map((sub) => (
+                        <tr key={sub.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center font-bold text-emerald-800 dark:text-emerald-300 shrink-0">
+                                <Mail className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <span className="font-semibold text-slate-900 dark:text-slate-100 block">
+                                  {sub.email}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  ID: {sub.id}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
+                            <div>{new Date(sub.subscribedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+                            <div className="text-[10px] text-slate-400 font-mono">{new Date(sub.subscribedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                          </td>
+
+                          <td className="py-3 px-4">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              <span>{sub.status}</span>
+                            </span>
+                          </td>
+
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                              {sub.source || 'STOREFRONT_FOOTER'}
+                            </span>
+                          </td>
+
+                          <td className="py-3 px-4 text-right">
+                            <a
+                              href={`mailto:${sub.email}?subject=Exclusive%20Offer%20from%20AKASH%20STORE&body=Hello!%20Thank%20you%20for%20subscribing%20to%20AKASH%20STORE.`}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 font-bold text-[11px] transition-colors cursor-pointer"
+                            >
+                              <Send className="w-3 h-3" />
+                              <span>Compose Email</span>
+                            </a>
+                          </td>
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* REGISTERED CUSTOMERS VIEW */
+        <>
+          {/* Summary KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
           <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             Total Customers
@@ -364,6 +569,8 @@ export const CustomersManager: React.FC = () => {
           </table>
         </div>
       </div>
+      </>
+      )}
 
       {/* CUSTOMER DETAILS & PURCHASE HISTORY MODAL */}
       {selectedCustomer && (

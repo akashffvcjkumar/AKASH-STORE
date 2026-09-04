@@ -412,3 +412,12 @@ export interface CartItem {
   variant?: ProductVariant;
   quantity: number;
 }
+
+export interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  subscribedAt: string;
+  status: 'ACTIVE' | 'UNSUBSCRIBED';
+  source: 'STOREFRONT_FOOTER' | 'CHECKOUT' | 'POPUP';
+}
+

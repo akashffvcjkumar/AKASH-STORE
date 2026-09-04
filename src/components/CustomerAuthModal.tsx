@@ -93,71 +93,26 @@ export const CustomerAuthModal: React.FC = () => {
     }
   };
 
-  // Preset Google Accounts for 1-click customer login demonstration
-  const quickGoogleAccounts = [
-    {
-      name: 'Hanter Pro (Buyer)',
-      email: 'hanterpro899@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
-      googleId: 'google_108273917492817291823'
-    },
-    {
-      name: 'Sarah Khan (Verified Buyer)',
-      email: 'sarah.khan.bd@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80',
-      googleId: 'google_204918274910283748192'
-    },
-    {
-      name: 'Tanvir Hossain (Customer)',
-      email: 'tanvir.buyer@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
-      googleId: 'google_392819203918293847582'
-    }
-  ];
-
-  const handleQuickGoogleSignIn = async (acc: typeof quickGoogleAccounts[0]) => {
-    setError(null);
-    setIsProcessing(true);
-    try {
-      const res = await loginCustomerWithGoogle({
-        email: acc.email,
-        name: acc.name,
-        avatar: acc.avatar,
-        googleId: acc.googleId,
-      });
-
-      if (res.success) {
-        showToast(`Signed in with Google as ${acc.name}!`, 'success');
-        setIsCustomerAuthModalOpen(false);
-      } else {
-        setError(res.error || 'Google Authentication failed.');
-      }
-    } catch (e: any) {
-      setError(e.message || 'An unexpected error occurred during Google sign-in.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleCustomGoogleSignIn = async (e: React.FormEvent) => {
+  // Google login handler
+  const handleGoogleSignInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customEmail.trim() || !customEmail.includes('@')) {
-      setError('Please enter a valid Gmail / Google Account address.');
+      setError('Please enter a valid Google Account / Gmail address.');
       return;
     }
 
     setError(null);
     setIsProcessing(true);
     try {
-      const name = customName.trim() || customEmail.split('@')[0];
+      const derivedName = customName.trim() || customEmail.split('@')[0];
       const res = await loginCustomerWithGoogle({
-        email: customEmail.trim(),
-        name,
+        email: customEmail.trim().toLowerCase(),
+        name: derivedName,
         googleId: `google_${Date.now()}`
       });
 
       if (res.success) {
-        showToast(`Signed in with Google as ${name}!`, 'success');
+        showToast(`Signed in with Google as ${derivedName}!`, 'success');
         setIsCustomerAuthModalOpen(false);
       } else {
         setError(res.error || 'Google Authentication failed.');
@@ -386,65 +341,89 @@ export const CustomerAuthModal: React.FC = () => {
 
               {/* GOOGLE TAB */}
               {authMode === 'google' && (
-                <>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">
-                      1-Click Google OAuth Profiles
-                    </p>
-                    <div className="space-y-2">
-                      {quickGoogleAccounts.map((acc, idx) => (
-                        <button
-                          key={idx}
-                          disabled={isProcessing}
-                          onClick={() => handleQuickGoogleSignIn(acc)}
-                          className="w-full flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all text-left hover:border-emerald-500 group cursor-pointer"
-                        >
-                          <div className="flex items-center gap-3">
-                            <img 
-                              src={acc.avatar} 
-                              alt={acc.name} 
-                              className="w-8 h-8 rounded-full object-cover border border-slate-300"
-                              referrerPolicy="no-referrer"
-                            />
-                            <div>
-                              <div className="text-xs font-semibold text-slate-800 group-hover:text-emerald-700">
-                                {acc.name}
-                              </div>
-                              <div className="text-[11px] text-slate-500">{acc.email}</div>
-                            </div>
-                          </div>
-                          <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-emerald-600 group-hover:border-emerald-500">
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </div>
-                        </button>
-                      ))}
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-2">
+                    <div className="w-10 h-10 mx-auto rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                        <path
+                          fill="#4285F4"
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                        />
+                      </svg>
                     </div>
+                    <h3 className="text-xs font-bold text-slate-800">Sign In With Your Google Account</h3>
+                    <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+                      Connect your personal Google Account to save cart items, track deliveries, and manage orders.
+                    </p>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100">
-                    <form onSubmit={handleCustomGoogleSignIn} className="space-y-2.5">
-                      <label className="block text-xs font-medium text-slate-700">
-                        Or Enter Any Gmail Address
+                  <form onSubmit={handleGoogleSignInSubmit} className="space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Google / Gmail Address
                       </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="email"
-                          placeholder="yourname@gmail.com"
-                          value={customEmail}
-                          onChange={(e) => setCustomEmail(e.target.value)}
-                          className="flex-1 px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      <input
+                        type="email"
+                        required
+                        placeholder="yourname@gmail.com"
+                        value={customEmail}
+                        onChange={(e) => setCustomEmail(e.target.value)}
+                        className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Your Full Name (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Asif Mahmud"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isProcessing || !customEmail.trim()}
+                      className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                    >
+                      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                        <path
+                          fill="#4285F4"
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                         />
-                        <button
-                          type="submit"
-                          disabled={isProcessing || !customEmail}
-                          className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors whitespace-nowrap cursor-pointer"
-                        >
-                          {isProcessing ? 'Connecting...' : 'Sign In'}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </>
+                        <path
+                          fill="#34A853"
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                        />
+                      </svg>
+                      <span>{isProcessing ? 'Authenticating with Google...' : 'Continue with Google Account'}</span>
+                    </button>
+                  </form>
+                </div>
               )}
 
               {/* Notice */}

@@ -822,6 +822,89 @@ class RoomOrderDao implements OrderDao {
   }
 }
 
+export interface NewsletterEntity {
+  id: string;
+  email: string;
+  subscribedAt: string;
+  status: 'ACTIVE' | 'UNSUBSCRIBED';
+  source: 'STOREFRONT_FOOTER' | 'CHECKOUT' | 'POPUP';
+}
+
+export interface NewsletterDao {
+  getAll(): Promise<NewsletterEntity[]>;
+  getByEmail(email: string): Promise<NewsletterEntity | null>;
+  insert(subscriber: NewsletterEntity): Promise<void>;
+  unsubscribe(email: string): Promise<boolean>;
+}
+
+class RoomNewsletterDao implements NewsletterDao {
+  private getStorage(): NewsletterEntity[] {
+    try {
+      const raw = localStorage.getItem(`${DB_STORAGE_KEY_PREFIX}newsletter_subscribers`);
+      if (raw) return JSON.parse(raw);
+      
+      // Default initial subscriber records
+      const initial: NewsletterEntity[] = [
+        {
+          id: 'sub-01',
+          email: 'akashchondroroy@protonmail.com',
+          subscribedAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+          status: 'ACTIVE',
+          source: 'STOREFRONT_FOOTER',
+        },
+        {
+          id: 'sub-02',
+          email: 'customer.dhaka@example.com',
+          subscribedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+          status: 'ACTIVE',
+          source: 'STOREFRONT_FOOTER',
+        },
+      ];
+      localStorage.setItem(`${DB_STORAGE_KEY_PREFIX}newsletter_subscribers`, JSON.stringify(initial));
+      return initial;
+    } catch {
+      return [];
+    }
+  }
+
+  private saveStorage(list: NewsletterEntity[]): void {
+    try {
+      localStorage.setItem(`${DB_STORAGE_KEY_PREFIX}newsletter_subscribers`, JSON.stringify(list));
+    } catch {}
+  }
+
+  async getAll(): Promise<NewsletterEntity[]> {
+    return this.getStorage();
+  }
+
+  async getByEmail(email: string): Promise<NewsletterEntity | null> {
+    const list = this.getStorage();
+    return list.find(s => s.email.toLowerCase() === email.toLowerCase().trim()) || null;
+  }
+
+  async insert(subscriber: NewsletterEntity): Promise<void> {
+    const list = this.getStorage();
+    const existingIndex = list.findIndex(s => s.email.toLowerCase() === subscriber.email.toLowerCase().trim());
+    if (existingIndex >= 0) {
+      list[existingIndex] = { ...list[existingIndex], status: 'ACTIVE' };
+    } else {
+      list.unshift(subscriber);
+    }
+    this.saveStorage(list);
+  }
+
+  async unsubscribe(email: string): Promise<boolean> {
+    const list = this.getStorage();
+    const sub = list.find(s => s.email.toLowerCase() === email.toLowerCase().trim());
+    if (sub) {
+      sub.status = 'UNSUBSCRIBED';
+      this.saveStorage(list);
+      return true;
+    }
+    return false;
+  }
+}
+
 /**
  * Main Room Database Class
  * AkashRoomDatabase encapsulates database access, initialization, and DAO accessors.
@@ -834,6 +917,7 @@ export class AkashRoomDatabase {
   public readonly productDao: ProductDao;
   public readonly orderDao: OrderDao;
   public readonly auditLogDao: AuditLogDao;
+  public readonly newsletterDao: NewsletterDao;
 
   private constructor() {
     this.userDao = new RoomUserDao();
@@ -841,6 +925,7 @@ export class AkashRoomDatabase {
     this.productDao = new RoomProductDao();
     this.orderDao = new RoomOrderDao();
     this.auditLogDao = new RoomAuditLogDao();
+    this.newsletterDao = new RoomNewsletterDao();
     this.initDatabase();
   }
 

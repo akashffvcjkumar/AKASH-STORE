@@ -55,6 +55,43 @@ async function startServer() {
   app.use('/api/settings', settingsRouter);
   app.use('/api/ai', aiRouter);
 
+  // In-memory newsletter subscribers list for marketing campaigns
+  const serverNewsletterSubscribers: Array<{ id: string; email: string; subscribedAt: string; source: string }> = [
+    { id: 'sub-init-1', email: 'akashchondroroy@protonmail.com', subscribedAt: new Date().toISOString(), source: 'STOREFRONT_FOOTER' },
+    { id: 'sub-init-2', email: 'customer.dhaka@example.com', subscribedAt: new Date().toISOString(), source: 'STOREFRONT_FOOTER' },
+  ];
+
+  app.post('/api/newsletter/subscribe', (req, res) => {
+    const { email, source } = req.body || {};
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ success: false, error: 'A valid email address is required' });
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const existing = serverNewsletterSubscribers.find(s => s.email === cleanEmail);
+    if (!existing) {
+      serverNewsletterSubscribers.unshift({
+        id: 'sub-' + Date.now(),
+        email: cleanEmail,
+        subscribedAt: new Date().toISOString(),
+        source: source || 'STOREFRONT_FOOTER',
+      });
+    }
+    res.json({
+      success: true,
+      message: 'Subscribed successfully to AKASH STORE newsletter!',
+      alreadySubscribed: !!existing,
+      totalSubscribers: serverNewsletterSubscribers.length,
+    });
+  });
+
+  app.get('/api/newsletter/subscribers', (req, res) => {
+    res.json({
+      success: true,
+      subscribers: serverNewsletterSubscribers,
+      count: serverNewsletterSubscribers.length,
+    });
+  });
+
   // Vite middleware in dev / Static files in prod
   if (process.env.NODE_ENV !== 'production') {
     const isHmrDisabled = process.env.DISABLE_HMR === 'true';
