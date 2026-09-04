@@ -238,7 +238,7 @@ const DEFAULT_ROLES: RoleEntity[] = [
   }
 ];
 
-// Initial Seed Users
+// Initial Seed Users: Store Owner / Super Admin Manager
 const DEFAULT_USERS: UserEntity[] = [
   {
     id: 'usr_super_admin_01',
@@ -247,89 +247,13 @@ const DEFAULT_USERS: UserEntity[] = [
     role: 'SUPER_ADMIN',
     status: 'ACTIVE',
     isStaff: true,
-    passwordHash: '@Akash5051', // Super Admin initial seed password
+    passwordHash: '@Akash5051', // Authoritative Super Admin password
     salt: 'salt_owner_01',
     phone: '01874839665',
     activeSessionsJson: JSON.stringify(['sess_owner_token_01']),
     lastLoginAt: new Date().toISOString(),
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'usr_admin_02',
-    name: 'Tariqul Islam',
-    email: 'tariqul@akashstore.com',
-    role: 'ADMIN',
-    status: 'ACTIVE',
-    isStaff: true,
-    passwordHash: 'admin123456',
-    salt: 'salt_admin_02',
-    phone: '01711223344',
-    activeSessionsJson: JSON.stringify([]),
-    lastLoginAt: '2026-09-01T14:30:00.000Z',
-    createdAt: '2026-02-15T00:00:00.000Z',
-    updatedAt: '2026-09-01T14:30:00.000Z',
-  },
-  {
-    id: 'usr_inv_03',
-    name: 'Selim Reza',
-    email: 'selim@akashstore.com',
-    role: 'INVENTORY_MANAGER',
-    status: 'ACTIVE',
-    isStaff: true,
-    passwordHash: 'inventory123',
-    salt: 'salt_inv_03',
-    phone: '01812345678',
-    activeSessionsJson: JSON.stringify([]),
-    lastLoginAt: '2026-09-02T09:15:00.000Z',
-    createdAt: '2026-03-10T00:00:00.000Z',
-    updatedAt: '2026-09-02T09:15:00.000Z',
-  },
-  {
-    id: 'usr_order_04',
-    name: 'Rahim Ahmed',
-    email: 'rahim@akashstore.com',
-    role: 'ORDER_MANAGER',
-    status: 'ACTIVE',
-    isStaff: true,
-    passwordHash: 'rahim123456',
-    salt: 'salt_order_04',
-    phone: '01912345678',
-    activeSessionsJson: JSON.stringify([]),
-    lastLoginAt: '2026-09-02T10:00:00.000Z',
-    createdAt: '2026-03-20T00:00:00.000Z',
-    updatedAt: '2026-09-02T10:00:00.000Z',
-  },
-  {
-    id: 'usr_support_05',
-    name: 'Nusrat Jahan',
-    email: 'nusrat@akashstore.com',
-    role: 'SUPPORT_AGENT',
-    status: 'ACTIVE',
-    isStaff: true,
-    passwordHash: 'nusrat123',
-    salt: 'salt_support_05',
-    phone: '01612345678',
-    activeSessionsJson: JSON.stringify([]),
-    lastLoginAt: '2026-09-01T17:45:00.000Z',
-    createdAt: '2026-04-01T00:00:00.000Z',
-    updatedAt: '2026-09-01T17:45:00.000Z',
-  },
-  // Customer account for negative testing of role claim enforcement
-  {
-    id: 'usr_cust_101',
-    name: 'Tanvir Customer',
-    email: 'tanvir.customer@gmail.com',
-    role: 'CUSTOMER',
-    status: 'ACTIVE',
-    isStaff: false,
-    passwordHash: 'custpass123',
-    salt: 'salt_cust_101',
-    phone: '01799887766',
-    activeSessionsJson: JSON.stringify([]),
-    lastLoginAt: '2026-09-01T12:00:00.000Z',
-    createdAt: '2026-05-10T00:00:00.000Z',
-    updatedAt: '2026-09-01T12:00:00.000Z',
   }
 ];
 
@@ -344,38 +268,10 @@ const DEFAULT_AUDIT_LOGS: AuditLogEntity[] = [
     action: 'SYSTEM_BOOT',
     resource: 'System',
     resourceId: 'SYS_INIT',
-    details: 'AKASH STORE Room Database initialized with schema version 2 and RBAC matrix.',
+    details: 'AKASH STORE Room Database initialized with schema version 2 and Store Owner authenticated.',
     ip: '103.145.118.42',
     status: 'SUCCESS',
     timestamp: '2026-09-01T08:00:00.000Z'
-  },
-  {
-    id: 'aud_seed_002',
-    employeeId: 'usr_order_04',
-    employeeName: 'Rahim Ahmed',
-    employeeEmail: 'rahim@akashstore.com',
-    role: 'ORDER_MANAGER',
-    action: 'PAYMENT_VERIFY',
-    resource: 'Payment',
-    resourceId: 'BKASH-TX-9921',
-    details: 'Verified bKash transaction ID 9K882LK19A for Order #AKS-20260901-0021 (৳2,450).',
-    ip: '103.145.118.45',
-    status: 'SUCCESS',
-    timestamp: '2026-09-02T09:30:00.000Z'
-  },
-  {
-    id: 'aud_seed_003',
-    employeeId: 'usr_inv_03',
-    employeeName: 'Selim Reza',
-    employeeEmail: 'selim@akashstore.com',
-    role: 'INVENTORY_MANAGER',
-    action: 'INVENTORY_ADJUST',
-    resource: 'Product',
-    resourceId: 'p1',
-    details: 'Stock received: added 25 units of Premium Wireless Bluetooth Headphone.',
-    ip: '103.145.118.50',
-    status: 'SUCCESS',
-    timestamp: '2026-09-02T10:15:00.000Z'
   }
 ];
 
@@ -388,15 +284,50 @@ class RoomUserDao implements UserDao {
   }
 
   private loadUsers(): UserEntity[] {
+    let users: UserEntity[] = [];
     try {
       const data = localStorage.getItem(this.getStorageKey());
       if (data) {
-        return JSON.parse(data);
+        users = JSON.parse(data);
       }
     } catch {
       // fallback
     }
-    return [...DEFAULT_USERS];
+
+    if (!Array.isArray(users) || users.length === 0) {
+      users = [...DEFAULT_USERS];
+    }
+
+    // Clean up obsolete test seed users
+    users = users.filter(u => !['usr_admin_02', 'usr_inv_03', 'usr_order_04', 'usr_support_05', 'usr_cust_101'].includes(u.id));
+
+    // Ensure authoritative Store Owner always exists with exact credentials
+    const ownerIndex = users.findIndex(u => u.email.toLowerCase() === 'akashchondroroy@protonmail.com' || u.role === 'SUPER_ADMIN');
+    if (ownerIndex >= 0) {
+      users[ownerIndex].email = 'akashchondroroy@protonmail.com';
+      users[ownerIndex].role = 'SUPER_ADMIN';
+      users[ownerIndex].status = 'ACTIVE';
+      users[ownerIndex].isStaff = true;
+      users[ownerIndex].passwordHash = '@Akash5051';
+    } else {
+      users.unshift({
+        id: 'usr_super_admin_01',
+        name: 'Akash Chondror Roy',
+        email: 'akashchondroroy@protonmail.com',
+        role: 'SUPER_ADMIN',
+        status: 'ACTIVE',
+        isStaff: true,
+        passwordHash: '@Akash5051',
+        salt: 'salt_owner_01',
+        phone: '01874839665',
+        activeSessionsJson: JSON.stringify(['sess_owner_token_01']),
+        lastLoginAt: new Date().toISOString(),
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    return users;
   }
 
   private saveUsers(users: UserEntity[]): void {
@@ -519,7 +450,7 @@ class RoomUserDao implements UserDao {
       return { 
         valid: false, 
         user, 
-        reason: 'Account Deactivated: This employee account has been disabled by the Super Admin.' 
+        reason: 'আপনার অ্যাকাউন্টের মেয়াদ শেষ বা আপনার অ্যাকাউন্ট নিষ্ক্রিয় করা হয়েছে। অনুগ্রহ করে ম্যানেজারের সাথে যোগাযোগ করুন। (Account Expired / Disabled by Manager)' 
       };
     }
 

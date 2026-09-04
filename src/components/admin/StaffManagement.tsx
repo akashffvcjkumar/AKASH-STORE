@@ -167,6 +167,7 @@ export const StaffManagement: React.FC = () => {
             email: formEmail.trim().toLowerCase(),
             role: formRole,
             password: formPassword.trim(),
+            customTemporaryPassword: formPassword.trim(),
           }),
         }).catch(() => {});
       }

@@ -142,9 +142,10 @@ export class AuthenticationViewModel {
 
       // Check if user is DISABLED
       if (result.user.status === 'DISABLED') {
+        const disabledMsg = 'আপনার অ্যাকাউন্টের মেয়াদ শেষ বা আপনার অ্যাকাউন্ট নিষ্ক্রিয় করা হয়েছে। অনুগ্রহ করে ম্যানেজারের সাথে যোগাযোগ করুন। (Account Expired / Disabled by Manager)';
         this.setState({
           status: 'ERROR',
-          errorMessage: 'Account Deactivated: This employee account has been disabled by the Super Admin.',
+          errorMessage: disabledMsg,
           user: null,
           role: null,
           isStaff: false,
@@ -152,7 +153,7 @@ export class AuthenticationViewModel {
         });
         return {
           success: false,
-          error: 'Account Deactivated: This employee account has been disabled by the Super Admin.'
+          error: disabledMsg
         };
       }
 

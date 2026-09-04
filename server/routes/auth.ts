@@ -324,7 +324,7 @@ router.post(['/login', '/staff/login'], (req: Request, res: Response) => {
       status: 'REJECTED',
     });
     return res.status(403).json({ 
-      error: 'Your account has been deactivated. Please contact the Store Owner.',
+      error: 'আপনার অ্যাকাউন্টের মেয়াদ শেষ বা আপনার অ্যাকাউন্ট নিষ্ক্রিয় করা হয়েছে। অনুগ্রহ করে ম্যানেজারের সাথে যোগাযোগ করুন। (Account Expired / Disabled by Manager)',
       code: 'ACCOUNT_DISABLED'
     });
   }

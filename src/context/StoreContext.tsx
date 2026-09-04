@@ -753,11 +753,51 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       showToast(`Welcome back, ${data.user.name} (${data.user.role})!`);
       return { success: true };
     } catch (err: any) {
-      // Offline fallback for static hosts like GitHub Pages
+      // Offline fallback for static hosts like GitHub Pages or offline mode:
+      try {
+        const roomUser = await AkashRoomDatabase.getInstance().userDao.findByEmail(email.trim().toLowerCase());
+        if (roomUser) {
+          if (roomUser.status === 'DISABLED') {
+            return {
+              success: false,
+              error: 'আপনার অ্যাকাউন্টের মেয়াদ শেষ বা আপনার অ্যাকাউন্ট নিষ্ক্রিয় করা হয়েছে। অনুগ্রহ করে ম্যানেজারের সাথে যোগাযোগ করুন। (Account Expired / Disabled by Manager)',
+            };
+          }
+
+          const isValid = (roomUser.passwordHash === password) || (roomUser.temporaryPassword && roomUser.temporaryPassword === password);
+          if (isValid && roomUser.isStaff && roomUser.role !== 'CUSTOMER') {
+            const employeeUser: EmployeeUser = {
+              id: roomUser.id,
+              name: roomUser.name,
+              email: roomUser.email,
+              role: roomUser.role as StaffRole,
+              status: roomUser.status,
+              authProvider: 'LOCAL',
+              phone: roomUser.phone,
+              createdAt: roomUser.createdAt,
+              updatedAt: roomUser.updatedAt,
+              lastLoginAt: new Date().toISOString(),
+            };
+            const perms = ROLE_PERMISSIONS[roomUser.role as StaffRole] || [];
+            const offlineToken = 'akash-offline-token-' + roomUser.id;
+            setToken(offlineToken);
+            setCurrentStaff(employeeUser);
+            setPermissions(perms);
+            localStorage.setItem('akash_staff_token', offlineToken);
+            localStorage.setItem('akash_room_active_user_id', roomUser.id);
+            localStorage.setItem('akash_room_active_role', roomUser.role);
+            showToast(`Welcome back, ${roomUser.name} (${roomUser.role})!`, 'success');
+            return { success: true };
+          }
+        }
+      } catch (roomErr) {
+        console.warn('Room fallback error:', roomErr);
+      }
+
       if (email.toLowerCase() === 'akashchondroroy@protonmail.com' && password === '@Akash5051') {
         const superAdminUser: EmployeeUser = {
-          id: 'emp-super-01',
-          name: 'Akash Roy (Main Manager)',
+          id: 'usr_super_admin_01',
+          name: 'Akash Chondror Roy',
           email: 'akashchondroroy@protonmail.com',
           role: 'SUPER_ADMIN',
           status: 'ACTIVE',
@@ -771,10 +811,12 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setCurrentStaff(superAdminUser);
         setPermissions(perms);
         localStorage.setItem('akash_staff_token', 'gh-static-super-admin-token');
-        showToast(`Logged in as Main Manager (Offline Mode)`, 'success');
+        localStorage.setItem('akash_room_active_user_id', 'usr_super_admin_01');
+        localStorage.setItem('akash_room_active_role', 'SUPER_ADMIN');
+        showToast(`Logged in as Main Manager (Store Owner)`, 'success');
         return { success: true };
       }
-      return { success: false, error: err.message || 'Network error (Backend unavailable on static host)' };
+      return { success: false, error: 'ভুল ইমেইল অথবা পাসওয়ার্ড প্রদান করা হয়েছে। অনুগ্রহ করে সঠিক তথ্য দিয়ে চেষ্টা করুন।' };
     }
   };
 

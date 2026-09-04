@@ -44,17 +44,16 @@ export class UserRepository {
     if (user.status === 'DISABLED') {
       return {
         success: false,
-        error: 'Account Deactivated: This employee account has been disabled by the Super Admin. All access is revoked.',
+        error: 'আপনার অ্যাকাউন্টের মেয়াদ শেষ বা আপনার অ্যাকাউন্ট নিষ্ক্রিয় করা হয়েছে। অনুগ্রহ করে ম্যানেজারের সাথে যোগাযোগ করুন। (Account Expired / Disabled by Manager)',
       };
     }
 
-    // In a real backend, password hashes are verified with scrypt/bcrypt.
-    // In our Room DB client layer, we verify matching password or seed hash:
-    const isValidPassword = (user.passwordHash === password) || (password === 'Akash@123') || (password.length >= 6);
+    // Strict password verification: must match user passwordHash or temporaryPassword
+    const isValidPassword = (user.passwordHash === password) || (user.temporaryPassword && user.temporaryPassword === password);
     if (!isValidPassword) {
       return {
         success: false,
-        error: 'Invalid password. Please check your credentials.',
+        error: 'ভুল পাসওয়ার্ড বা তথ্য প্রদান করা হয়েছে। অনুগ্রহ করে সঠিক তথ্য দিয়ে চেষ্টা করুন।',
       };
     }
 

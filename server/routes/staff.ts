@@ -44,7 +44,7 @@ router.get('/', (req: AuthenticatedRequest, res: Response) => {
  * Requirement: Only Super Admins or Admins can create these staff accounts and assign roles.
  */
 router.post('/', (req: AuthenticatedRequest, res: Response) => {
-  const { name, email, role, customTemporaryPassword } = req.body;
+  const { name, email, role, customTemporaryPassword, password } = req.body;
   const admin = req.user!;
   const ip = extractClientIp(req);
 
@@ -76,7 +76,7 @@ router.post('/', (req: AuthenticatedRequest, res: Response) => {
     return res.status(409).json({ error: `An account with email ${email} already exists.` });
   }
 
-  const tempPassword = customTemporaryPassword || generateTemporaryPassword();
+  const tempPassword = password || customTemporaryPassword || generateTemporaryPassword();
   const { hash, salt } = hashPassword(tempPassword);
 
   const newEmployee: EmployeeUser = {

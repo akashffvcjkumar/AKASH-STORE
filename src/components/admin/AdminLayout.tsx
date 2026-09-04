@@ -48,14 +48,6 @@ export const AdminLayout: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleAdminDarkMode]);
 
-  const demoStaffRoles: { role: StaffRole; name: string; desc: string }[] = [
-    { role: 'SUPER_ADMIN', name: 'Akash Chondror Roy', desc: 'Store Owner (All Permissions)' },
-    { role: 'ADMIN', name: 'Tariqul Islam', desc: 'Admin Operations' },
-    { role: 'INVENTORY_MANAGER', name: 'Selim Reza', desc: 'Inventory & Stock' },
-    { role: 'ORDER_MANAGER', name: 'Rahim', desc: 'Orders & Logistics' },
-    { role: 'SUPPORT_AGENT', name: 'Nusrat Jahan', desc: 'Customer Support' },
-  ];
-
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-200 ${adminDarkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
       
@@ -100,29 +92,16 @@ export const AdminLayout: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Multi-Employee Role Switcher (Crucial for RBAC verification) */}
-            <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto justify-start md:justify-center py-1 scrollbar-none">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 hidden lg:inline">
-                Test Individual Account:
-              </span>
-              {demoStaffRoles.map((item) => {
-                const isCurrent = currentStaff?.role === item.role;
-                return (
-                  <button
-                    key={item.role}
-                    onClick={() => switchStaffRole(item.role)}
-                    className={`px-2 py-1 rounded text-[11px] font-medium transition-all shrink-0 flex items-center gap-1 cursor-pointer ${
-                      isCurrent
-                        ? 'bg-emerald-500 text-slate-950 font-bold shadow-xs'
-                        : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
-                    }`}
-                    title={item.desc}
-                  >
-                    <span>{item.name.split(' ')[0]}</span>
-                    <span className="text-[9px] opacity-75 font-mono">({item.role.slice(0, 5)})</span>
-                  </button>
-                );
-              })}
+            {/* Active Authenticated Staff Indicator */}
+            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto justify-start md:justify-center py-1">
+              <div className="flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-slate-400 font-medium">Active Session:</span>
+                <span className="text-emerald-400 font-bold">{currentStaff?.name || 'Authorized Staff'}</span>
+                <span className="text-[10px] bg-emerald-950 text-emerald-300 font-mono px-2 py-0.5 rounded-full border border-emerald-800">
+                  {currentStaff?.role || 'STAFF'}
+                </span>
+              </div>
             </div>
 
             {/* Active User info, Dark Mode Toggle & Actions */}

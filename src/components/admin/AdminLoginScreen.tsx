@@ -44,7 +44,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
   onCancel,
 }) => {
   const { state: authState, signIn, signInWithCredentialManager, validateRoleClaimForAdminRoute } = useAuthentication();
-  const { setActiveView, showToast, settings, currentCustomer, logoutCustomer } = useStore();
+  const { setActiveView, showToast, settings, currentCustomer, logoutCustomer, loginStaff } = useStore();
 
   // Login Mode: Store Owner/Manager vs. Staff/Employee
   const [loginMode, setLoginMode] = useState<'MANAGER' | 'STAFF'>('MANAGER');
@@ -105,7 +105,14 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
       });
 
       if (!authResult.success || !authResult.user) {
-        setLocalError(authResult.error || 'Authentication failed. Please check your email and password.');
+        setLocalError(authResult.error || 'ভুল ইমেইল অথবা পাসওয়ার্ড প্রদান করা হয়েছে। অনুগ্রহ করে সঠিক তথ্য দিয়ে চেষ্টা করুন।');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Check if account status is DISABLED
+      if (authResult.user.status === 'DISABLED') {
+        setLocalError('আপনার অ্যাকাউন্টের মেয়াদ শেষ বা আপনার অ্যাকাউন্ট নিষ্ক্রিয় করা হয়েছে। অনুগ্রহ করে ম্যানেজারের সাথে যোগাযোগ করুন। (Account Expired / Disabled by Manager)');
         setIsProcessing(false);
         return;
       }
@@ -120,20 +127,22 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
           role: claimCheck.role,
           reason: claimCheck.reason,
         });
-        setLocalError(claimCheck.reason || 'Access Denied: You do not have permissions to access the management portal.');
+        setLocalError(claimCheck.reason || 'প্রবেশাধিকার সংরক্ষিত: আপনার অ্যাকাউন্টে ম্যানেজমেন্ট প্যানেলে প্রবেশের অনুমতি নেই।');
         setIsProcessing(false);
         return;
       }
 
       // Verify role alignment with selected portal mode
       if (loginMode === 'MANAGER' && claimCheck.role !== 'SUPER_ADMIN') {
-        // If a non-owner staff attempts to log in via Owner tab, inform them politely
         setRoleClaimDiagnostic({
           tested: true,
-          valid: true,
+          valid: false,
           role: claimCheck.role,
-          reason: `Authenticated as staff member (${claimCheck.role}). Redirecting to Staff Dashboard.`,
+          reason: 'প্রবেশাধিকার সংরক্ষিত: শুধুমাত্র প্রধান ম্যানেজার (akashchondroroy@protonmail.com) এই পোর্টালে লগইন করতে পারবেন।',
         });
+        setLocalError('প্রবেশাধিকার সংরক্ষিত: শুধুমাত্র স্টোর ওনার / প্রধান ম্যানেজার (akashchondroroy@protonmail.com) এই পোর্টালে লগইন করতে পারবেন। স্টাফ বা অ্যাডমিনরা অনুগ্রহ করে Staff / Employee পোর্টালে লগইন করুন।');
+        setIsProcessing(false);
+        return;
       } else {
         setRoleClaimDiagnostic({
           tested: true,
@@ -142,6 +151,9 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
           reason: `Role validated against Room Database: '${claimCheck.role}' authorized.`,
         });
       }
+
+      // Sync session with StoreContext
+      await loginStaff(trimmedEmail, password);
 
       showToast(`Welcome back, ${authResult.user.name} (${claimCheck.role})!`, 'success');
 
@@ -353,7 +365,7 @@ export const AdminLoginScreen: React.FC<AdminLoginScreenProps> = ({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder={loginMode === 'MANAGER' ? 'manager@akashstore.com' : 'employee@akashstore.com'}
+                  placeholder={loginMode === 'MANAGER' ? 'akashchondroroy@protonmail.com' : 'employee@akashstore.com'}
                   autoComplete="username"
                   className="block w-full pl-9 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono shadow-inner transition-all"
                 />

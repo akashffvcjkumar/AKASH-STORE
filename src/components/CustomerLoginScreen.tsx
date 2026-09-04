@@ -54,28 +54,6 @@ export const CustomerLoginScreen: React.FC<CustomerLoginScreenProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // Preset Google test customer profiles
-  const presetGoogleAccounts = [
-    {
-      name: 'Tanvir Hossain',
-      email: 'tanvir.hossain.bd@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&q=80',
-      googleId: 'g_user_tanvir_98124',
-    },
-    {
-      name: 'Nusrat Jahan',
-      email: 'nusrat.jahan.dhaka@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&q=80',
-      googleId: 'g_user_nusrat_65213',
-    },
-    {
-      name: 'Rafiqul Islam',
-      email: 'rafiqul.islam.ctg@gmail.com',
-      avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&q=80',
-      googleId: 'g_user_rafiq_33421',
-    },
-  ];
-
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
@@ -454,65 +432,58 @@ export const CustomerLoginScreen: React.FC<CustomerLoginScreenProps> = ({
 
               {/* TAB 3: GOOGLE OAUTH */}
               {activeTab === 'google' && (
-                <div className="space-y-3">
-                  <div className="text-[11px] text-slate-500 text-center">
-                    Select a Google customer profile or enter your Google address:
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2">
+                    <div className="w-10 h-10 mx-auto rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z"/>
+                        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                      </svg>
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Sign In With Your Google Account</h3>
+                    <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+                      Enter your personal Google / Gmail address to sign in and manage your orders.
+                    </p>
                   </div>
 
-                  <div className="space-y-2">
-                    {presetGoogleAccounts.map(account => (
-                      <button
-                        key={account.email}
-                        type="button"
-                        disabled={isProcessing}
-                        onClick={() => handleGoogleSignIn(account)}
-                        className="w-full p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 flex items-center justify-between transition-all cursor-pointer group shadow-2xs"
-                      >
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={account.avatar} 
-                            alt={account.name} 
-                            className="w-8 h-8 rounded-full object-cover border border-slate-200"
-                          />
-                          <div className="text-left">
-                            <div className="text-xs font-bold text-slate-900 group-hover:text-emerald-700">
-                              {account.name}
-                            </div>
-                            <div className="text-[11px] text-slate-500">
-                              {account.email}
-                            </div>
-                          </div>
-                        </div>
+                  <form onSubmit={handleCustomGoogleSubmit} className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-slate-700">Your Google / Gmail Address</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="yourname@gmail.com"
+                        value={customEmail}
+                        onChange={(e) => setCustomEmail(e.target.value)}
+                        className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium"
+                      />
+                    </div>
 
-                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 group-hover:bg-emerald-100 px-2.5 py-1 rounded-lg">
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-                            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z"/>
-                            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                          </svg>
-                          <span>Sign In</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-slate-700">Full Name (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Asif Mahmud"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium"
+                      />
+                    </div>
 
-                  <form onSubmit={handleCustomGoogleSubmit} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 mt-2">
-                    <div className="text-[11px] font-bold text-slate-700">Or use your own Gmail:</div>
-                    <input
-                      type="email"
-                      required
-                      placeholder="yourname@gmail.com"
-                      value={customEmail}
-                      onChange={(e) => setCustomEmail(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
                     <button
                       type="submit"
-                      disabled={isProcessing}
-                      className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                      disabled={isProcessing || !customEmail.trim()}
+                      className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                     >
-                      Continue with Google
+                      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z"/>
+                        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                      </svg>
+                      <span>{isProcessing ? 'Connecting to Google...' : 'Continue with Google Account'}</span>
                     </button>
                   </form>
                 </div>

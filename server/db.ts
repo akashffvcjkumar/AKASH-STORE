@@ -30,10 +30,6 @@ const DB_FILE = path.join(DATA_DIR, 'store_db.json');
 function getInitialData(): DatabaseSchema {
   // Hash default passwords safely at startup - Super Admin seeded with @Akash5051
   const ownerAuth = hashPassword('@Akash5051');
-  const rahimAuth = hashPassword('RahimStaff@2026');
-  const tanvirAuth = hashPassword('TanvirStaff@2026');
-  const nusratAuth = hashPassword('NusratStaff@2026');
-  const farukAuth = hashPassword('FarukAdmin@2026');
 
   const users: EmployeeUser[] = [
     {
@@ -49,62 +45,6 @@ function getInitialData(): DatabaseSchema {
       lastLoginAt: new Date().toISOString(),
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
-    },
-    {
-      id: 'usr_emp_005',
-      name: 'Faruk Hasan',
-      email: 'faruk@akashstore.com',
-      role: 'ADMIN',
-      status: 'ACTIVE',
-      authProvider: 'LOCAL',
-      passwordHash: farukAuth.hash,
-      salt: farukAuth.salt,
-      mustChangePassword: false,
-      lastLoginAt: '2026-09-01T17:10:00.000Z',
-      createdAt: '2026-01-20T12:00:00.000Z',
-      updatedAt: '2026-01-20T12:00:00.000Z',
-    },
-    {
-      id: 'usr_emp_002',
-      name: 'Rahim Ahmed',
-      email: 'rahim@akashstore.com',
-      role: 'MANAGER',
-      status: 'ACTIVE',
-      authProvider: 'LOCAL',
-      passwordHash: rahimAuth.hash,
-      salt: rahimAuth.salt,
-      mustChangePassword: false,
-      lastLoginAt: '2026-09-01T14:20:00.000Z',
-      createdAt: '2026-02-15T09:30:00.000Z',
-      updatedAt: '2026-02-15T09:30:00.000Z',
-    },
-    {
-      id: 'usr_emp_004',
-      name: 'Nusrat Jahan',
-      email: 'nusrat@akashstore.com',
-      role: 'EMPLOYEE',
-      status: 'ACTIVE',
-      authProvider: 'LOCAL',
-      passwordHash: nusratAuth.hash,
-      salt: nusratAuth.salt,
-      mustChangePassword: false,
-      lastLoginAt: '2026-09-02T09:45:00.000Z',
-      createdAt: '2026-04-01T10:00:00.000Z',
-      updatedAt: '2026-04-01T10:00:00.000Z',
-    },
-    {
-      id: 'usr_emp_003',
-      name: 'Tanvir Hossain',
-      email: 'tanvir@akashstore.com',
-      role: 'INVENTORY_MANAGER',
-      status: 'ACTIVE',
-      authProvider: 'LOCAL',
-      passwordHash: tanvirAuth.hash,
-      salt: tanvirAuth.salt,
-      mustChangePassword: false,
-      lastLoginAt: '2026-09-02T08:15:00.000Z',
-      createdAt: '2026-03-10T11:00:00.000Z',
-      updatedAt: '2026-03-10T11:00:00.000Z',
     },
     // Seeded Regular Customer (Default role: CUSTOMER, Google Authenticated)
     {
